@@ -25,7 +25,10 @@ import {
   TrendingUp,
   AlertTriangle,
   ShieldAlert,
-  ChevronLeft
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Calendar
 } from 'lucide-react';
 
 import jsPDF from 'jspdf';
@@ -56,8 +59,11 @@ const AdminDashboard = () => {
   });
   const [professionals, setProfessionals] = useState([]);
   const [users, setUsers] = useState([]);
-  const [analyticsData, setAnalyticsData] = useState(null);
   const [categoryData, setCategoryData] = useState([]);
+  const [systemCategories, setSystemCategories] = useState([]);
+  const [newCategoryLabel, setNewCategoryLabel] = useState('');
+  const [newCategoryValue, setNewCategoryValue] = useState('');
+  const [newCategoryImage, setNewCategoryImage] = useState(null);
   const [statusData, setStatusData] = useState([]);
   const [liveStatusData, setLiveStatusData] = useState([]);
   const [reports, setReports] = useState([]);
@@ -89,6 +95,62 @@ const AdminDashboard = () => {
 
   const openConfirm = (config) => {
     setConfirmDialog({ ...config, isOpen: true });
+  };
+
+  // Calendar States & Offline Synchronization
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(new Date());
+  const [calendarTasks, setCalendarTasks] = useState(() => {
+    try {
+      const stored = localStorage.getItem('admin_calendar_tasks');
+      return stored ? JSON.parse(stored) : [
+        { id: '1', date: new Date().toISOString().split('T')[0], title: 'Platform Security Audit', category: 'maintenance', completed: false },
+        { id: '2', date: new Date(Date.now() - 86400000).toISOString().split('T')[0], title: 'Review Pending Handymen Applications', category: 'verification', completed: true },
+        { id: '3', date: new Date(Date.now() + 86400000).toISOString().split('T')[0], title: 'Broadcasting Welcome Message', category: 'broadcast', completed: false },
+        { id: '4', date: new Date(Date.now() + 172800000).toISOString().split('T')[0], title: 'Database Backup Schedule', category: 'maintenance', completed: false }
+      ];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskCategory, setNewTaskCategory] = useState('verification');
+
+  useEffect(() => {
+    localStorage.setItem('admin_calendar_tasks', JSON.stringify(calendarTasks));
+  }, [calendarTasks]);
+
+  const getLocalDateString = (d) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const handleAddCalendarTask = (e) => {
+    e.preventDefault();
+    if (!newTaskTitle.trim()) return;
+    
+    const dateStr = getLocalDateString(selectedCalendarDate);
+    const newTask = {
+      id: Date.now().toString(),
+      date: dateStr,
+      title: newTaskTitle.trim(),
+      category: newTaskCategory,
+      completed: false
+    };
+    
+    setCalendarTasks(prev => [...prev, newTask]);
+    setNewTaskTitle('');
+  };
+
+  const handleToggleCalendarTask = (taskId) => {
+    setCalendarTasks(prev => prev.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t));
+  };
+
+  const handleDeleteCalendarTask = (taskId) => {
+    setCalendarTasks(prev => prev.filter(t => t.id !== taskId));
   };
 
   useEffect(() => {
@@ -136,6 +198,10 @@ const AdminDashboard = () => {
       } else if (activeTab === 'users') {
         const response = await adminService.getAllUsers();
         if (response.success) setUsers(response.data);
+      } else if (activeTab === 'categories') {
+        const response = await fetch('/api/categories');
+        const data = await response.json();
+        if (data.success) setSystemCategories(data.data);
       } else if (activeTab === 'analytics') {
         const [analyticsRes, categoryRes, statusRes, revenueRes] = await Promise.all([
           adminService.getAnalyticsData(),
@@ -145,7 +211,6 @@ const AdminDashboard = () => {
         ]);
         
         if (analyticsRes.success) {
-          setAnalyticsData(analyticsRes.data);
           if (analyticsRes.data.liveStatusDistribution) {
             setLiveStatusData(analyticsRes.data.liveStatusDistribution);
           }
@@ -427,7 +492,9 @@ const AdminDashboard = () => {
     { id: 'professionals', label: 'Professionals', icon: Shield, badge: null },
     { id: 'users', label: 'Total Users', icon: Users, badge: null },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp, badge: null },
+    { id: 'categories', label: 'Categories', icon: Plus, badge: null },
     { id: 'reports', label: 'Reports', icon: ShieldAlert, badge: null },
+    { id: 'calendar', label: 'Calendar', icon: Calendar, badge: null },
     { id: 'broadcast', label: 'Broadcast', icon: MessageSquare, badge: null },
   ];
 
@@ -451,46 +518,46 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex overflow-hidden relative">
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-80 bg-white/80 backdrop-blur-2xl border-r border-slate-100 transform transition-all duration-500 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} shadow-xl`}>
-        <div className="h-full flex flex-col p-8 relative">
-          <div className="flex items-center justify-between mb-12 relative">
-            <Logo className="h-10 w-auto" isStatic={true} />
-            <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-3 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-2xl transition-all"><X size={20} /></button>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/80 backdrop-blur-2xl border-r border-slate-100 transform transition-all duration-500 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} shadow-xl`}>
+        <div className="h-full flex flex-col p-6 relative">
+          <div className="flex items-center justify-between mb-8 relative">
+            <Logo className="h-8 w-auto" isStatic={true} />
+            <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all"><X size={18} /></button>
           </div>
 
-          <div className="mb-10 p-6 bg-slate-50 rounded-[32px] border border-slate-100 relative group overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-teal-500/5 -mr-12 -mt-12 rounded-full blur-2xl"></div>
-            <div className="flex items-center gap-4 relative">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-teal-100">
+          <div className="mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 relative group overflow-hidden">
+            <div className="absolute top-0 right-0 w-16 h-16 bg-teal-500/5 -mr-8 -mt-8 rounded-full blur-xl"></div>
+            <div className="flex items-center gap-3 relative">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-teal-100">
                 {adminUser?.username?.charAt(0).toUpperCase() || 'A'}
               </div>
               <div className="overflow-hidden">
-                <p className="font-black text-slate-900 truncate leading-tight">{adminUser?.fullName || 'Super Admin'}</p>
-                <p className="text-[10px] font-black uppercase tracking-widest text-teal-600 mt-1">Platform Manager</p>
+                <p className="font-bold text-slate-900 truncate leading-tight text-sm">{adminUser?.fullName || 'Super Admin'}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-teal-600 mt-0.5">Manager</p>
               </div>
             </div>
           </div>
 
-          <nav className="flex-1 space-y-2 relative">
+          <nav className="flex-1 space-y-1.5 relative">
             {menuItems.map((item) => {
               const Icon = item.icon;
               return (
                 <button 
                   key={item.id} 
                   onClick={() => setActiveTab(item.id)} 
-                  className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 group relative ${activeTab === item.id ? 'bg-white shadow-md border border-slate-100 text-teal-600' : 'text-slate-500 hover:bg-white hover:shadow-sm'}`}
+                  className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all duration-300 group relative ${activeTab === item.id ? 'bg-white shadow-md border border-slate-100 text-teal-600' : 'text-slate-500 hover:bg-white hover:shadow-sm'}`}
                 >
-                  <Icon size={20} className={activeTab === item.id ? 'text-teal-500 border-teal-500' : 'group-hover:text-teal-500 transition-colors'} />
-                  <span className="font-black text-xs uppercase tracking-widest">{item.label}</span>
-                  {item.badge && <span className="ml-auto px-2 py-0.5 rounded-lg text-[10px] font-black bg-orange-100 text-orange-600 border border-orange-200">{item.badge}</span>}
+                  <Icon size={16} className={activeTab === item.id ? 'text-teal-500 border-teal-500' : 'group-hover:text-teal-500 transition-colors'} />
+                  <span className="font-black text-[11px] uppercase tracking-wider">{item.label}</span>
+                  {item.badge && <span className="ml-auto px-1.5 py-0.5 rounded-md text-[9px] font-black bg-orange-100 text-orange-600 border border-orange-200">{item.badge}</span>}
                 </button>
               );
             })}
           </nav>
 
-          <div className="mt-auto pt-8 border-t border-slate-100">
-            <button onClick={handleLogout} className="w-full flex items-center gap-4 p-5 rounded-2xl text-rose-500 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-rose-50 transition-all duration-300 group">
-              <Power size={18} className="group-hover:scale-110 transition-transform" />
+          <div className="mt-auto pt-6 border-t border-slate-100">
+            <button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 rounded-xl text-rose-500 font-black text-[9px] uppercase tracking-[0.2em] hover:bg-rose-50 transition-all duration-300 group">
+              <Power size={15} className="group-hover:scale-110 transition-transform" />
               <span>Log Out</span>
             </button>
           </div>
@@ -499,63 +566,63 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto h-screen relative">
-        <header className="sticky top-0 z-40 bg-white/60 backdrop-blur-2xl border-b border-slate-100 px-10 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-6 lg:hidden">
-            <button onClick={() => setSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-600 rounded-2xl"><Menu size={22} /></button>
+        <header className="sticky top-0 z-40 bg-white/60 backdrop-blur-2xl border-b border-slate-100 px-6 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-4 lg:hidden">
+            <button onClick={() => setSidebarOpen(true)} className="p-2.5 bg-slate-50 text-slate-600 rounded-xl"><Menu size={20} /></button>
             <button 
                 onClick={() => navigate(-1)}
-                className="p-3 bg-slate-50 text-slate-400 hover:text-teal-600 rounded-2xl transition-all"
+                className="p-2.5 bg-slate-50 text-slate-400 hover:text-teal-600 rounded-xl transition-all"
                 title="Go Back"
             >
-                <ChevronLeft size={22} />
+                <ChevronLeft size={20} />
             </button>
-            <Logo className="h-8 w-auto" isStatic={true} />
+            <Logo className="h-7 w-auto" isStatic={true} />
           </div>
 
-          <div className="hidden md:flex items-center gap-4 flex-1 max-w-xl">
+          <div className="hidden md:flex items-center gap-3 flex-1 max-w-lg">
             <div className="relative w-full group">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors" size={18} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors" size={16} />
               <input 
                 type="text" 
                 placeholder="Search professionals, requests, specific data..." 
-                className="w-full bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-6 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all placeholder:text-slate-400" 
+                className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-10 pr-4 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all placeholder:text-slate-400" 
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-8">
-            <button className="relative p-3 text-slate-400 hover:text-teal-500 transition-colors bg-slate-50 rounded-2xl flex items-center justify-center">
-              <Bell size={22} />
-              <span className="absolute top-2.5 right-2.5 w-3 h-3 bg-orange-500 rounded-full border-2 border-white"></span>
+          <div className="flex items-center gap-6">
+            <button className="relative p-2.5 text-slate-400 hover:text-teal-500 transition-colors bg-slate-50 rounded-xl flex items-center justify-center">
+              <Bell size={18} />
+              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-orange-500 rounded-full border-2 border-white"></span>
             </button>
-            <div className="flex items-center gap-4 pl-8 border-l border-slate-100">
+            <div className="flex items-center gap-3 pl-6 border-l border-slate-100">
               <div className="text-right hidden sm:block">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Access Level</p>
-                <p className="text-xs font-black text-slate-900 uppercase tracking-tighter">System Admin</p>
+                <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Access Level</p>
+                <p className="text-[11px] font-bold text-slate-900 uppercase tracking-tighter">System Admin</p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-600">
-                <Shield size={22} />
+              <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-600">
+                <Shield size={18} />
               </div>
             </div>
           </div>
         </header>
 
-        <div className="p-10 lg:p-14 max-w-[1600px] mx-auto space-y-12 relative">
+        <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-8 relative">
           {activeTab === 'overview' && (
-            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <section>
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
                   <div>
-                    <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">Platform Dashboard</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Real-time system health & analytics</p>
+                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-1">Platform Dashboard</h1>
+                    <p className="text-slate-500 font-semibold uppercase tracking-widest text-[9px]">Real-time system health & analytics</p>
                   </div>
-                  <div className="px-5 py-2.5 bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
-                    <Clock size={16} className="text-orange-500" />
-                    <span className="text-xs font-black text-slate-600 uppercase tracking-wider">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                  <div className="px-4 py-2 bg-white rounded-xl border border-slate-100 shadow-sm flex items-center gap-2">
+                    <Clock size={14} className="text-orange-500" />
+                    <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   {[
                     { label: 'Platform Users', value: stats.totalUsers, icon: Users, color: 'from-blue-500 to-blue-600', shadow: 'shadow-blue-100', tab: 'users' },
                     { label: 'Applications', value: stats.totalApplications, icon: FileText, color: 'from-orange-500 to-orange-600', shadow: 'shadow-orange-100', tab: 'professionals' },
@@ -568,49 +635,49 @@ const AdminDashboard = () => {
                       <div 
                         key={i} 
                         onClick={() => setActiveTab(stat.tab)}
-                        className="relative bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/40 group hover:scale-[1.02] active:scale-95 transition-all cursor-pointer overflow-hidden"
+                        className="relative bg-white p-5 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 group hover:scale-[1.02] active:scale-95 transition-all cursor-pointer overflow-hidden"
                       >
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 -mr-16 -mt-16 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <div className="flex items-center justify-between mb-6 relative z-10">
-                          <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-white shadow-lg ${stat.shadow} group-hover:rotate-6 transition-transform`}>
-                            <Icon size={24} />
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 -mr-12 -mt-12 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="flex items-center justify-between mb-4 relative z-10">
+                          <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-white shadow-lg ${stat.shadow} group-hover:rotate-6 transition-transform`}>
+                            <Icon size={18} />
                           </div>
-                          <div className="w-12 h-12 rounded-full border border-slate-50 bg-slate-50/50 flex items-center justify-center">
-                            <Activity size={16} className="text-slate-300" />
+                          <div className="w-9 h-9 rounded-full border border-slate-50 bg-slate-50/50 flex items-center justify-center">
+                            <Activity size={12} className="text-slate-300" />
                           </div>
                         </div>
-                        <p className="text-4xl font-black text-slate-900 mb-2 relative z-10">{stat.value}</p>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] relative z-10">{stat.label}</p>
+                        <p className="text-2xl font-bold text-slate-900 mb-1 relative z-10">{stat.value}</p>
+                        <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest relative z-10">{stat.label}</p>
                       </div>
                     );
                   })}
                 </div>
               </section>
 
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 <div className="xl:col-span-2">
-                  <section className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-xl shadow-slate-200/40 h-full">
-                    <div className="flex justify-between items-center mb-10">
+                  <section className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 h-full">
+                    <div className="flex justify-between items-center mb-6">
                       <div>
-                        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight flex items-center gap-3">
-                          <Activity size={24} className="text-teal-600" /> Recent Registrations
+                        <h3 className="text-base font-bold text-slate-900 uppercase tracking-tight flex items-center gap-2">
+                          <Activity size={18} className="text-teal-600" /> Recent Registrations
                         </h3>
                       </div>
-                      <button onClick={() => setActiveTab('requests')} className="px-5 py-2.5 bg-slate-50 text-teal-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-teal-50 transition-all">Explore All</button>
+                      <button onClick={() => setActiveTab('requests')} className="px-4 py-2 bg-slate-50 text-teal-600 text-[9px] font-semibold uppercase tracking-widest rounded-xl hover:bg-teal-50 transition-all">Explore All</button>
                     </div>
                     <div className="overflow-x-auto">
                       <table className="w-full text-left">
                         <thead>
-                          <tr className="border-b border-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                            <th className="pb-6 pl-4">Professional</th>
-                            <th className="pb-6">Specialization</th>
-                            <th className="pb-6">Status</th>
-                            <th className="pb-6 text-right pr-4">Profile</th>
+                          <tr className="border-b border-slate-50 text-slate-400 text-[9px] font-semibold uppercase tracking-wider">
+                            <th className="pb-3 pl-4">Professional</th>
+                            <th className="pb-3">Specialization</th>
+                            <th className="pb-3">Status</th>
+                            <th className="pb-3 text-right pr-4">Profile</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                           {professionals.length === 0 ? (
-                            <tr><td colSpan={4} className="py-24 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No new entries detected</td></tr>
+                            <tr><td colSpan={4} className="py-16 text-center text-slate-400 font-semibold uppercase tracking-widest text-[9px]">No new entries detected</td></tr>
                           ) : (
                             professionals.map((p) => (
                               <tr 
@@ -618,9 +685,9 @@ const AdminDashboard = () => {
                                 onClick={() => handleViewDetails(p)}
                                 className="hover:bg-teal-50/50 transition-all group cursor-pointer"
                               >
-                                <td className="py-7 pl-4">
-                                  <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center shadow-inner">
+                                <td className="py-3.5 pl-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center shadow-inner">
                                       {p.profileImage ? (
                                         <img 
                                           src={p.profileImage.startsWith('http') ? p.profileImage : `/${p.profileImage.replace(/\\/g, '/')}`} 
@@ -628,14 +695,14 @@ const AdminDashboard = () => {
                                           alt={p.firstName}
                                         />
                                       ) : (
-                                        <Users size={24} className="text-teal-500" />
+                                        <Users size={16} className="text-teal-500" />
                                       )}
                                     </div>
                                     <div>
-                                      <p className="font-black text-slate-900 text-base flex items-center gap-2">
+                                      <p className="font-bold text-slate-900 text-sm flex items-center gap-2">
                                         {p.firstName} {p.lastName}
                                       </p>
-                                      <p className="text-[10px] text-teal-600 font-black uppercase tracking-widest mt-0.5 flex items-center gap-2">
+                                      <p className="text-[9px] text-teal-600 font-semibold uppercase tracking-wider mt-0.5 flex items-center gap-1.5">
                                         Partner ID: #{p._id.slice(-6).toUpperCase()}
                                         <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
                                         {p.completedJobs || 0} {p.completedJobs === 1 ? 'Service' : 'Services'} Done
@@ -643,12 +710,12 @@ const AdminDashboard = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="py-7">
-                                  <span className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest">{p.serviceCategory}</span>
+                                <td className="py-3.5">
+                                  <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-[9px] font-semibold uppercase tracking-wider">{p.serviceCategory}</span>
                                 </td>
-                                <td className="py-7"><StatusBadge status={p.verificationStatus} /></td>
-                                <td className="py-7 pr-4 text-right">
-                                  <button onClick={() => handleViewDetails(p)} className="p-3 text-slate-400 hover:text-teal-600 hover:bg-white hover:shadow-md rounded-2xl transition-all"><Eye size={20} /></button>
+                                <td className="py-3.5"><StatusBadge status={p.verificationStatus} /></td>
+                                <td className="py-3.5 pr-4 text-right">
+                                  <button onClick={() => handleViewDetails(p)} className="p-2 text-slate-400 hover:text-teal-600 hover:bg-white hover:shadow-md rounded-xl transition-all"><Eye size={16} /></button>
                                 </td>
                               </tr>
                             ))
@@ -659,37 +726,37 @@ const AdminDashboard = () => {
                   </section>
                 </div>
 
-                <div className="xl:col-span-1 space-y-8">
-                  <div className="bg-gradient-to-br from-teal-600 to-teal-700 p-8 rounded-[48px] text-white shadow-2xl shadow-teal-100 group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 -mr-16 -mt-16 rounded-full blur-3xl group-hover:scale-125 transition-transform"></div>
+                <div className="xl:col-span-1 space-y-6">
+                  <div className="bg-gradient-to-br from-teal-600 to-teal-700 p-6 rounded-3xl text-white shadow-2xl shadow-teal-100 group relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 -mr-12 -mt-12 rounded-full blur-2xl group-hover:scale-125 transition-transform"></div>
                     <div className="relative">
-                      <Zap className="w-10 h-10 mb-6 text-orange-400" />
-                      <h4 className="text-2xl font-black mb-3">Instant Messaging</h4>
-                      <p className="text-teal-50/80 text-sm font-medium leading-relaxed mb-8">Send broadcast notifications to all registered professionals and clients in seconds.</p>
+                      <Zap className="w-8 h-8 mb-4 text-orange-400" />
+                      <h4 className="text-lg font-bold mb-1.5">Instant Messaging</h4>
+                      <p className="text-teal-50/80 text-xs font-medium leading-relaxed mb-6">Send broadcast notifications to all registered professionals and clients in seconds.</p>
                       <button 
                         onClick={() => setActiveTab('broadcast')}
-                        className="w-full py-4 bg-white text-teal-600 rounded-[20px] font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:bg-orange-500 hover:text-white transition-all transform hover:-translate-y-1"
+                        className="w-full py-2.5 bg-white text-teal-600 rounded-xl font-semibold text-[9px] uppercase tracking-wider shadow-lg hover:bg-orange-500 hover:text-white transition-all transform hover:-translate-y-1"
                       >
                         Open Message Center
                       </button>
                     </div>
                   </div>
 
-                  <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-xl shadow-slate-200/40">
-                    <h4 className="font-black text-slate-900 uppercase tracking-widest text-[10px] mb-8 flex items-center gap-3">
-                      <Compass size={16} className="text-orange-500" /> Platform Insights
+                  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                    <h4 className="font-semibold text-slate-900 uppercase tracking-wider text-[9px] mb-4 flex items-center gap-2">
+                      <Compass size={14} className="text-orange-500" /> Platform Insights
                     </h4>
-                    <div className="space-y-6">
+                    <div className="space-y-3">
                       {[
                         { label: 'Security Protocols', value: 'Optimized', icon: Shield, color: 'text-emerald-500 bg-emerald-50' },
                         { label: 'Cloud Sync', value: 'Active', icon: Orbit, color: 'text-teal-500 bg-teal-50' }
                       ].map((item, i) => (
-                        <div key={i} className="flex items-center justify-between p-5 bg-slate-50 rounded-3xl border border-slate-100">
-                          <div className="flex items-center gap-4">
-                            <div className={`${item.color} p-3 rounded-2xl`}><item.icon size={18} /></div>
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{item.label}</span>
+                        <div key={i} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
+                          <div className="flex items-center gap-3">
+                            <div className={`${item.color} p-2 rounded-xl`}><item.icon size={14} /></div>
+                            <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">{item.label}</span>
                           </div>
-                          <span className="text-[10px] font-black text-slate-900 uppercase">{item.value}</span>
+                          <span className="text-[9px] font-semibold text-slate-900 uppercase">{item.value}</span>
                         </div>
                       ))}
                     </div>
@@ -698,33 +765,33 @@ const AdminDashboard = () => {
               </div>
             </div>
           )}
-
+          
           {(activeTab === 'requests' || activeTab === 'professionals') && (
-            <div className="space-y-12 animate-in fade-in duration-500">
-              <section>
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div className="space-y-6 animate-in fade-in duration-500">
+               <section>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
                   <div>
-                    <h1 className="text-4xl font-black tracking-tight mb-2 text-slate-900">{activeTab === 'requests' ? 'Awaiting Verification' : 'Verified Professionals'}</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Filter and manage service partner records</p>
+                    <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900">{activeTab === 'requests' ? 'Awaiting Verification' : 'Verified Professionals'}</h1>
+                    <p className="text-slate-500 font-medium uppercase tracking-wider text-[9px]">Filter and manage service partner records</p>
                   </div>
                   
                   {/* Search and Filter UI */}
-                  <div className="flex flex-col sm:flex-row gap-4 items-center bg-white p-3 rounded-[32px] border border-slate-100 shadow-sm w-full md:w-auto">
-                    <div className="relative w-full sm:w-64">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <div className="flex flex-col sm:flex-row gap-3 items-center bg-white p-2 rounded-xl border border-slate-100 shadow-sm w-full md:w-auto">
+                    <div className="relative w-full sm:w-56">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
                       <input 
                         type="text" 
                         placeholder="Search name, email..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 bg-slate-50 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all border border-transparent"
+                        className="w-full pl-9 pr-3 py-2 bg-slate-50 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all border border-transparent"
                       />
                     </div>
                     
                     <select 
                       value={filterCategory}
                       onChange={(e) => setFilterCategory(e.target.value)}
-                      className="w-full sm:w-auto px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 focus:outline-none transition-all border border-transparent cursor-pointer hover:bg-slate-100"
+                      className="w-full sm:w-auto px-3 py-2 bg-slate-50 rounded-lg text-[9px] font-semibold uppercase tracking-wider text-slate-600 focus:outline-none transition-all border border-transparent cursor-pointer hover:bg-slate-100"
                     >
                       <option value="">All Categories</option>
                       <option value="plumbing">Plumbing</option>
@@ -744,7 +811,7 @@ const AdminDashboard = () => {
                       <select 
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="w-full sm:w-auto px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 focus:outline-none transition-all border border-transparent cursor-pointer hover:bg-slate-100"
+                        className="w-full sm:w-auto px-3 py-2 bg-slate-50 rounded-lg text-[9px] font-semibold uppercase tracking-wider text-slate-600 focus:outline-none transition-all border border-transparent cursor-pointer hover:bg-slate-100"
                       >
                         <option value="verified">Verified</option>
                         <option value="rejected">Rejected</option>
@@ -754,20 +821,20 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-xl shadow-slate-200/40">
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
                       <thead>
-                        <tr className="border-b border-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                          <th className="pb-6 pl-4">Full Identity</th>
-                          <th className="pb-6">Sector</th>
-                          <th className="pb-6">Status</th>
-                          <th className="pb-6 text-right pr-4">Operations</th>
+                        <tr className="border-b border-slate-50 text-slate-400 text-[9px] font-semibold uppercase tracking-wider">
+                          <th className="pb-3 pl-4">Full Identity</th>
+                          <th className="pb-3">Sector</th>
+                          <th className="pb-3">Status</th>
+                          <th className="pb-3 text-right pr-4">Operations</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
                         {professionals.length === 0 ? (
-                           <tr><td colSpan={4} className="py-24 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No records found for this sector</td></tr>
+                           <tr><td colSpan={4} className="py-16 text-center text-slate-400 font-semibold uppercase tracking-wider text-[9px]">No records found for this sector</td></tr>
                         ) : (
                           professionals.map((p) => (
                             <tr 
@@ -775,9 +842,9 @@ const AdminDashboard = () => {
                               onClick={() => handleViewDetails(p)}
                               className="hover:bg-teal-50/50 transition-all group cursor-pointer"
                             >
-                              <td className="py-7 pl-4">
-                                <div className="flex items-center gap-4 text-slate-900">
-                                  <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center shadow-inner">
+                              <td className="py-3.5 pl-4">
+                                <div className="flex items-center gap-3 text-slate-900">
+                                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center shadow-inner">
                                     {p.profileImage ? (
                                       <img 
                                         src={p.profileImage.startsWith('http') ? p.profileImage : `/${p.profileImage.replace(/\\/g, '/')}`} 
@@ -785,14 +852,14 @@ const AdminDashboard = () => {
                                         alt={p.firstName} 
                                       />
                                     ) : (
-                                      <Users size={24} className="text-teal-500" />
+                                      <Users size={16} className="text-teal-500" />
                                     )}
                                   </div>
                                   <div>
-                                    <div className="font-black text-base flex items-center gap-2">
+                                    <div className="font-bold text-sm flex items-center gap-2">
                                       {p.firstName} {p.lastName}
                                     </div>
-                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5 flex items-center gap-2">
+                                    <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5 flex items-center gap-1.5">
                                       {p.email}
                                       <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
                                       {p.completedJobs || 0} {p.completedJobs === 1 ? 'Service' : 'Services'} Done
@@ -800,46 +867,46 @@ const AdminDashboard = () => {
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-7">
-                                <span className="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest">{p.serviceCategory}</span>
+                              <td className="py-3.5">
+                                <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-[9px] font-semibold uppercase tracking-wider">{p.serviceCategory}</span>
                               </td>
-                              <td className="py-7"><StatusBadge status={p.verificationStatus} /></td>
-                              <td className="py-7 pr-4 text-right">
+                              <td className="py-3.5"><StatusBadge status={p.verificationStatus} /></td>
+                              <td className="py-3.5 pr-4 text-right">
                                   {p.verificationStatus === 'pending' ? (
-                                    <div className="flex justify-end gap-3">
+                                    <div className="flex justify-end gap-2">
                                       <button 
                                         onClick={(e) => { e.stopPropagation(); handleApprove(p._id); }} 
-                                        className="p-4 bg-emerald-500 text-white hover:bg-emerald-600 rounded-2xl transition-all shadow-lg shadow-emerald-100 active:scale-95"
+                                        className="p-2 bg-emerald-500 text-white hover:bg-emerald-600 rounded-xl transition-all shadow-lg shadow-emerald-100 active:scale-95"
                                         title="Verify Professional"
                                       >
-                                        <CheckCircle size={20} />
+                                        <CheckCircle size={15} />
                                       </button>
                                       <button 
                                         onClick={(e) => { e.stopPropagation(); handleReject(p._id); }} 
-                                        className="p-4 bg-rose-500 text-white hover:bg-rose-600 rounded-2xl transition-all shadow-lg shadow-rose-100 active:scale-95"
+                                        className="p-2 bg-rose-500 text-white hover:bg-rose-600 rounded-xl transition-all shadow-lg shadow-rose-100 active:scale-95"
                                         title="Decline Profile"
                                       >
-                                        <X size={20} />
+                                        <X size={15} />
                                       </button>
                                     </div>
                                   ) : (
-                                    <div className="flex justify-end gap-3">
+                                    <div className="flex justify-end gap-2">
                                       <button 
                                         onClick={(e) => { e.stopPropagation(); handleDownloadPDF(p); }} 
-                                        className="p-4 bg-white text-slate-400 hover:text-orange-500 border border-slate-100 rounded-2xl transition-all hover:shadow-md"
+                                        className="p-2 bg-white text-slate-400 hover:text-orange-500 border border-slate-100 rounded-xl transition-all hover:shadow-md"
                                         title="Download Application"
                                       >
-                                        <Download size={20} />
+                                        <Download size={15} />
                                       </button>
-                                      <button onClick={() => handleViewDetails(p)} className="p-4 bg-slate-50 text-slate-400 hover:text-teal-600 hover:bg-white hover:shadow-md rounded-2xl transition-all">
-                                        <Eye size={20} />
+                                      <button onClick={() => handleViewDetails(p)} className="p-2 bg-slate-50 text-slate-400 hover:text-teal-600 hover:bg-white hover:shadow-md rounded-xl transition-all">
+                                        <Eye size={15} />
                                       </button>
                                       <button 
                                         onClick={(e) => { e.stopPropagation(); handleDeleteProfessional(p._id); }} 
-                                        className="p-4 bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-white hover:shadow-md rounded-2xl transition-all"
+                                        className="p-2 bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
                                         title="Delete Professional Profile"
                                       >
-                                        <Trash2 size={20} />
+                                        <Trash2 size={15} />
                                       </button>
                                     </div>
                                   )}
@@ -856,67 +923,67 @@ const AdminDashboard = () => {
           )}
 
           {activeTab === 'users' && (
-            <div className="space-y-12 animate-in fade-in duration-500">
+            <div className="space-y-6 animate-in fade-in duration-500">
               <section>
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
                   <div>
-                    <h1 className="text-4xl font-black tracking-tight mb-2 text-slate-900">Platform Users</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Total registered users across the platform</p>
+                    <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900">Platform Users</h1>
+                    <p className="text-slate-500 font-medium uppercase tracking-wider text-[9px]">Total registered users across the platform</p>
                   </div>
                 </div>
 
-                <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-xl shadow-slate-200/40">
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
                       <thead>
-                        <tr className="border-b border-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                          <th className="pb-6 pl-4">User Identity</th>
-                          <th className="pb-6">Email</th>
-                          <th className="pb-6">Status</th>
-                          <th className="pb-6 text-center">Registered Date</th>
-                          <th className="pb-6 text-right pr-4">Operations</th>
+                        <tr className="border-b border-slate-50 text-slate-400 text-[9px] font-semibold uppercase tracking-wider">
+                          <th className="pb-3 pl-4">User Identity</th>
+                          <th className="pb-3">Email</th>
+                          <th className="pb-3">Status</th>
+                          <th className="pb-3 text-center">Registered Date</th>
+                          <th className="pb-3 text-right pr-4">Operations</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
                         {users.length === 0 ? (
-                           <tr><td colSpan={4} className="py-24 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No user records found</td></tr>
+                           <tr><td colSpan={4} className="py-16 text-center text-slate-400 font-semibold uppercase tracking-wider text-[9px]">No user records found</td></tr>
                         ) : (
                           users.map((u) => (
                             <tr 
                               key={u._id} 
                               className="hover:bg-teal-50/50 transition-all group"
                             >
-                              <td className="py-7 pl-4">
-                                <div className="flex items-center gap-4 text-slate-900">
-                                  <div className="w-14 min-w-[3.5rem] h-14 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-600 shadow-inner">
-                                    <Shield size={24} />
+                              <td className="py-3.5 pl-4">
+                                <div className="flex items-center gap-3 text-slate-900">
+                                  <div className="w-10 min-w-[2.5rem] h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-600 shadow-inner">
+                                    <Shield size={16} />
                                   </div>
                                   <div>
-                                    <div className="font-black text-base">{u.name}</div>
-                                    <p className="text-[10px] text-teal-600 font-black uppercase tracking-widest mt-0.5">@{u.username || 'user'}</p>
+                                    <div className="font-bold text-sm">{u.name}</div>
+                                    <p className="text-[9px] text-teal-600 font-semibold uppercase tracking-wider mt-0.5">@{u.username || 'user'}</p>
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-7">
-                                <span className="text-sm font-medium text-slate-600">{u.email}</span>
+                              <td className="py-3.5">
+                                <span className="text-xs font-semibold text-slate-600">{u.email}</span>
                               </td>
-                              <td className="py-7">
+                              <td className="py-3.5">
                                 {u.isVerified ? (
-                                  <span className="px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-100">Verified</span>
+                                  <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-md text-[9px] font-semibold uppercase tracking-wider border border-emerald-100">Verified</span>
                                 ) : (
-                                  <span className="px-3 py-1.5 bg-orange-50 text-orange-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-orange-100">Pending OTP</span>
+                                  <span className="px-2.5 py-1 bg-orange-50 text-orange-600 rounded-md text-[9px] font-semibold uppercase tracking-wider border border-orange-100">Pending OTP</span>
                                 )}
                               </td>
-                              <td className="py-7 pr-4 text-right">
-                                <span className="text-xs font-bold text-slate-400">{new Date(u.createdAt).toLocaleDateString()}</span>
+                              <td className="py-3.5 text-center">
+                                <span className="text-[11px] font-semibold text-slate-400">{new Date(u.createdAt).toLocaleDateString()}</span>
                               </td>
-                              <td className="py-7 pr-4 text-right">
+                              <td className="py-3.5 pr-4 text-right">
                                 <button 
                                   onClick={() => handleDeleteUser(u._id)} 
-                                  className="p-4 bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-white hover:shadow-md rounded-2xl transition-all"
+                                  className="p-2 bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
                                   title="Delete User Account"
                                 >
-                                  <Trash2 size={20} />
+                                  <Trash2 size={15} />
                                 </button>
                               </td>
                             </tr>
@@ -931,33 +998,33 @@ const AdminDashboard = () => {
           )}
           
           {activeTab === 'broadcast' && (
-            <div className="max-w-4xl mx-auto h-[600px] animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="max-w-4xl mx-auto h-[500px] animate-in fade-in slide-in-from-bottom-4 duration-500">
                <MessageCenter />
             </div>
           )}
 
           {activeTab === 'analytics' && (
-            <div className="space-y-12 animate-in fade-in duration-500">
-              <section>
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div className="space-y-6 animate-in fade-in duration-500">
+               <section>
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
                   <div>
-                    <h1 className="text-4xl font-black tracking-tight mb-2 text-slate-900">Platform Analytics</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Real-time growth and distribution metrics</p>
+                    <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900">Platform Analytics</h1>
+                    <p className="text-slate-500 font-medium uppercase tracking-wider text-[9px]">Real-time growth and distribution metrics</p>
                   </div>
-                  <div className="flex gap-4">
-                    <button onClick={() => fetchDashboardData()} className="px-6 py-3 bg-white border border-slate-100 text-teal-600 text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center gap-2">
-                       <Activity size={14} /> Refresh Data
+                  <div className="flex gap-3">
+                    <button onClick={() => fetchDashboardData()} className="px-4 py-2 bg-white border border-slate-100 text-teal-600 text-[9px] font-semibold uppercase tracking-wider rounded-xl shadow-sm hover:shadow-md transition-all flex items-center gap-1.5">
+                       <Activity size={12} /> Refresh Data
                     </button>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Growth Chart */}
-                  <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-xl shadow-slate-200/40 min-h-[450px]">
-                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-8 flex items-center gap-3">
-                       <TrendingUp size={18} className="text-teal-500" /> Platform Growth
+                  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 min-h-[350px]">
+                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                       <TrendingUp size={16} className="text-teal-500" /> Platform Growth
                     </h3>
-                    <div className="h-[300px] w-full">
+                    <div className="h-[220px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={categoryData}>
                           <defs>
@@ -967,31 +1034,31 @@ const AdminDashboard = () => {
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} dy={10} />
-                          <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} dy={10} />
+                          <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} />
                           <Tooltip 
-                            contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                            contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '11px' }}
                           />
-                          <Area type="monotone" dataKey="value" stroke="#0d9488" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                          <Area type="monotone" dataKey="value" stroke="#0d9488" strokeWidth={2.5} fillOpacity={1} fill="url(#colorValue)" />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
 
                   {/* Category Distribution */}
-                  <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-xl shadow-slate-200/40 min-h-[450px]">
-                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-8 flex items-center gap-3">
-                       <Orbit size={18} className="text-orange-500" /> Service Categories
+                  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 min-h-[350px]">
+                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                       <Orbit size={16} className="text-orange-500" /> Service Categories
                     </h3>
-                    <div className="h-[300px] w-full">
+                    <div className="h-[220px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
                             data={categoryData}
                             cx="50%"
                             cy="50%"
-                            innerRadius={60}
-                            outerRadius={100}
+                            innerRadius={45}
+                            outerRadius={75}
                             paddingAngle={5}
                             dataKey="value"
                           >
@@ -1000,73 +1067,73 @@ const AdminDashboard = () => {
                             ))}
                           </Pie>
                           <Tooltip 
-                            contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                            contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '11px' }}
                           />
-                          <Legend verticalAlign="bottom" height={36}/>
+                          <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '9px', fontWeight: 'bold' }}/>
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
 
                   {/* Status Metrics */}
-                  <div className="lg:col-span-2 bg-white p-10 rounded-[48px] border border-slate-100 shadow-xl shadow-slate-200/40">
-                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-8 flex items-center gap-3">
-                       <CheckCircle2 size={18} className="text-blue-500" /> Verification Status Breakdown
+                  <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                       <CheckCircle2 size={16} className="text-blue-500" /> Verification Status Breakdown
                     </h3>
-                    <div className="h-[300px] w-full">
+                    <div className="h-[220px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={statusData}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} dy={10} />
-                          <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} dy={10} />
+                          <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} />
                           <Tooltip 
                              cursor={{fill: '#f8fafc'}}
-                             contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                             contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '11px' }}
                           />
-                          <Bar dataKey="value" fill="#0d9488" radius={[10, 10, 0, 0]} barSize={60} />
+                          <Bar dataKey="value" fill="#0d9488" radius={[6, 6, 0, 0]} barSize={40} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
 
                   {/* Live Professional Tracking */}
-                  <div className="lg:col-span-2 bg-white p-10 rounded-[48px] border border-slate-100 shadow-xl shadow-slate-200/40">
-                    <div className="flex justify-between items-center mb-8">
-                      <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-3">
-                         <Activity size={18} className="text-emerald-500" /> Live Professional Tracking
+                  <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                         <Activity size={16} className="text-emerald-500" /> Live Professional Tracking
                       </h3>
                       <div className="flex gap-2">
-                        <span className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                        <span className="flex items-center gap-1 text-[9px] font-semibold text-slate-400 uppercase tracking-wider">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Free
                         </span>
-                        <span className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4">
+                        <span className="flex items-center gap-1 text-[9px] font-semibold text-slate-400 uppercase tracking-wider ml-3">
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Ongoing
                         </span>
-                        <span className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-widest ml-4">
+                        <span className="flex items-center gap-1 text-[9px] font-semibold text-slate-400 uppercase tracking-wider ml-3">
                           <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Offline
                         </span>
                       </div>
                     </div>
-                    <div className="h-[300px] w-full">
+                    <div className="h-[220px] w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart 
                           data={liveStatusData}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                          margin={{ top: 10, right: 20, left: 10, bottom: 5 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                           <XAxis 
                             dataKey="status" 
                             axisLine={false} 
                             tickLine={false} 
-                            tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} 
+                            tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} 
                             dy={10} 
                           />
-                          <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} />
+                          <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} />
                           <Tooltip 
                              cursor={{fill: '#f8fafc'}}
-                             contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                             contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '11px' }}
                           />
-                          <Bar dataKey="count" radius={[10, 10, 0, 0]} barSize={80}>
+                          <Bar dataKey="count" radius={[6, 6, 0, 0]} barSize={50}>
                             {liveStatusData.map((entry, index) => (
                               <Cell 
                                 key={`cell-${index}`} 
@@ -1075,7 +1142,7 @@ const AdminDashboard = () => {
                                   entry.status === 'Ongoing' ? '#3b82f6' : 
                                   '#cbd5e1'
                                 } 
-                              />
+                                />
                             ))}
                           </Bar>
                         </BarChart>
@@ -1084,58 +1151,58 @@ const AdminDashboard = () => {
                   </div>
 
                   {/* Revenue Analytics Section */}
-                  <div className="lg:col-span-2 space-y-10">
-                    <div className="flex items-center gap-4">
+                  <div className="lg:col-span-2 space-y-6">
+                    <div className="flex items-center gap-3">
                       <div className="h-px flex-1 bg-slate-100"></div>
-                      <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Revenue Analytics</h2>
+                      <h2 className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-400">Revenue Analytics</h2>
                       <div className="h-px flex-1 bg-slate-100"></div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Revenue Timeline */}
-                      <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-xl shadow-slate-200/40">
-                        <div className="flex justify-between items-start mb-8">
-                          <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest flex items-center gap-3">
-                            <TrendingUp size={18} className="text-emerald-500" /> Revenue (Last 7 Days)
+                      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                        <div className="flex justify-between items-start mb-6">
+                          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                            <TrendingUp size={16} className="text-emerald-500" /> Revenue (Last 7 Days)
                           </h3>
                           <div className="text-right">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Revenue</p>
-                            <p className="text-xl font-black text-emerald-600">रू {revenueData.totalRevenue?.toLocaleString()}</p>
+                            <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Total Revenue</p>
+                            <p className="text-lg font-bold text-emerald-600">रू {revenueData.totalRevenue?.toLocaleString()}</p>
                           </div>
                         </div>
-                        <div className="h-[250px] w-full">
+                        <div className="h-[180px] w-full">
                           <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={revenueData.timeline}>
                               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} dy={10} />
-                              <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} />
+                              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} dy={10} />
+                              <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} />
                               <Tooltip 
-                                contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                                contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '11px' }}
                                 formatter={(value) => [`रू ${value.toLocaleString()}`, 'Revenue']}
                               />
-                              <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={4} dot={{ r: 6, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8 }} />
+                              <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981', strokeWidth: 1.5, stroke: '#fff' }} activeDot={{ r: 6 }} />
                             </LineChart>
                           </ResponsiveContainer>
                         </div>
                       </div>
 
                       {/* Revenue by Service */}
-                      <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-xl shadow-slate-200/40">
-                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-8 flex items-center gap-3">
-                          <DollarSign size={18} className="text-blue-500" /> Revenue by Service
+                      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-6 flex items-center gap-2">
+                          <DollarSign size={16} className="text-blue-500" /> Revenue by Service
                         </h3>
-                        <div className="h-[250px] w-full">
+                        <div className="h-[180px] w-full">
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={revenueData.categoryRevenue} layout="vertical">
                               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                               <XAxis type="number" hide />
-                              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#64748b'}} width={100} />
+                              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} width={80} />
                               <Tooltip 
                                 cursor={{fill: 'transparent'}}
-                                contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                                contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '11px' }}
                                 formatter={(value) => [`रू ${value.toLocaleString()}`, 'Revenue']}
                               />
-                              <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={20} />
+                              <Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} barSize={16} />
                             </BarChart>
                           </ResponsiveContainer>
                         </div>
@@ -1148,94 +1215,94 @@ const AdminDashboard = () => {
           )}
           
           {activeTab === 'reports' && (
-            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                <section>
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
                   <div>
-                    <h1 className="text-4xl font-black tracking-tight mb-2 text-slate-900">Safety Reports</h1>
-                    <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Manage platform integrity and user disputes</p>
+                    <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900">Safety Reports</h1>
+                    <p className="text-slate-500 font-medium uppercase tracking-wider text-[9px]">Manage platform integrity and user disputes</p>
                   </div>
-                  <div className="flex bg-slate-100 p-1.5 rounded-[20px] gap-1">
+                  <div className="flex bg-slate-100 p-1 rounded-xl gap-0.5">
                     {['All', 'Pending', 'Resolved', 'Dismissed'].map((status) => (
-                      <button
-                        key={status}
-                        onClick={() => setReportStatusFilter(status)}
-                        className={`px-6 py-2.5 rounded-[14px] text-[10px] font-black uppercase tracking-widest transition-all ${
-                          reportStatusFilter === status 
-                            ? 'bg-white text-slate-900 shadow-md shadow-slate-200' 
-                            : 'text-slate-400 hover:text-slate-600'
-                        }`}
-                      >
-                        {status}
-                      </button>
+                       <button
+                         key={status}
+                         onClick={() => setReportStatusFilter(status)}
+                         className={`px-4 py-2 rounded-lg text-[9px] font-semibold uppercase tracking-wider transition-all ${
+                           reportStatusFilter === status 
+                             ? 'bg-white text-slate-900 shadow-md shadow-slate-200' 
+                             : 'text-slate-400 hover:text-slate-600'
+                         }`}
+                       >
+                         {status}
+                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* Report Tracking Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-                  <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl shadow-slate-200/20">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Total Reports Received</p>
-                    <h3 className="text-3xl font-black text-slate-900">{reports.length}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/20">
+                    <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Total Reports Received</p>
+                    <h3 className="text-2xl font-bold text-slate-900">{reports.length}</h3>
                   </div>
-                  <div className="bg-orange-50 p-8 rounded-[40px] border border-orange-100 shadow-xl shadow-orange-100/20">
-                    <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-2">Pending Investigation</p>
-                    <h3 className="text-3xl font-black text-orange-600">{reports.filter(r => r.status === 'Pending').length}</h3>
+                  <div className="bg-orange-50 p-5 rounded-2xl border border-orange-100 shadow-xl shadow-orange-100/20">
+                    <p className="text-[9px] font-semibold text-orange-400 uppercase tracking-wider mb-1">Pending Investigation</p>
+                    <h3 className="text-2xl font-bold text-orange-600">{reports.filter(r => r.status === 'Pending').length}</h3>
                   </div>
-                  <div className="bg-emerald-50 p-8 rounded-[40px] border border-emerald-100 shadow-xl shadow-emerald-100/20">
-                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">Successfully Resolved</p>
-                    <h3 className="text-3xl font-black text-emerald-600">{reports.filter(r => r.status === 'Resolved').length}</h3>
+                  <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-xl shadow-emerald-100/20">
+                    <p className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wider mb-1">Successfully Resolved</p>
+                    <h3 className="text-2xl font-bold text-emerald-600">{reports.filter(r => r.status === 'Resolved').length}</h3>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-[48px] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
                       <thead>
-                        <tr className="border-b border-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                          <th className="py-8 pl-10">Reporter</th>
-                          <th className="py-8">Target</th>
-                          <th className="py-8">Reason</th>
-                          <th className="py-8">Status</th>
-                          <th className="py-8 text-right pr-10">Action</th>
+                        <tr className="border-b border-slate-50 text-slate-400 text-[9px] font-semibold uppercase tracking-wider">
+                          <th className="py-3.5 pl-6">Reporter</th>
+                          <th className="py-3.5">Target</th>
+                          <th className="py-3.5">Reason</th>
+                          <th className="py-3.5">Status</th>
+                          <th className="py-3.5 text-right pr-6">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
                         {reports.length === 0 ? (
-                          <tr><td colSpan={5} className="py-24 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No active reports found</td></tr>
+                           <tr><td colSpan={5} className="py-16 text-center text-slate-400 font-semibold uppercase tracking-wider text-[9px]">No active reports found</td></tr>
                         ) : (
                           reports
                             .filter(r => reportStatusFilter === 'All' || r.status === reportStatusFilter)
                             .map((report) => (
                             <tr key={report._id} className="hover:bg-slate-50 transition-all">
-                              <td className="py-7 pl-10">
+                              <td className="py-3.5 pl-6">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 text-xs font-black">
+                                  <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500 text-xs font-bold">
                                     {report.reporterModel.charAt(0)}
                                   </div>
                                   <div>
-                                    <p className="text-sm font-black text-slate-900">{report.reporter?.firstName || 'Unknown'} {report.reporter?.lastName || ''}</p>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{report.reporterModel}</p>
+                                    <p className="text-sm font-bold text-slate-900">{report.reporter?.firstName || 'Unknown'} {report.reporter?.lastName || ''}</p>
+                                    <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">{report.reporterModel}</p>
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-7">
+                              <td className="py-3.5">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-500 text-xs font-black">
+                                  <div className="w-8 h-8 bg-rose-50 rounded-lg flex items-center justify-center text-rose-500 text-xs font-bold">
                                     {report.targetModel.charAt(0)}
                                   </div>
                                   <div>
-                                    <p className="text-sm font-black text-slate-900">{report.target?.firstName || 'Deleted'} {report.target?.lastName || ''}</p>
-                                    <p className="text-[10px] text-rose-400 font-bold uppercase tracking-widest">{report.targetModel}</p>
+                                    <p className="text-sm font-bold text-slate-900">{report.target?.firstName || 'Deleted'} {report.target?.lastName || ''}</p>
+                                    <p className="text-[9px] text-rose-400 font-semibold uppercase tracking-wider">{report.targetModel}</p>
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-7">
-                                <p className="text-sm font-bold text-slate-700">{report.reason}</p>
-                                <p className="text-[10px] text-slate-400 font-medium truncate max-w-[200px]">{report.description}</p>
+                              <td className="py-3.5">
+                                <p className="text-sm font-semibold text-slate-700">{report.reason}</p>
+                                <p className="text-[9px] text-slate-400 font-medium truncate max-w-[200px]">{report.description}</p>
                               </td>
-                              <td className="py-7">
-                                <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${
+                              <td className="py-3.5">
+                                <span className={`px-2.5 py-1 rounded-md text-[9px] font-semibold uppercase tracking-wider border ${
                                   report.status === 'Pending' ? 'bg-orange-50 text-orange-600 border-orange-100' :
                                   report.status === 'Resolved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                                   'bg-slate-50 text-slate-400 border-slate-100'
@@ -1243,14 +1310,14 @@ const AdminDashboard = () => {
                                   {report.status}
                                 </span>
                               </td>
-                              <td className="py-7 pr-10 text-right">
+                              <td className="py-3.5 pr-6 text-right">
                                 <button 
                                   onClick={() => {
                                     setSelectedReport(report);
                                     setAdminReportNote(report.adminNotes || '');
                                     setShowReportModal(true);
                                   }}
-                                  className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md ${
+                                  className={`px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider rounded-lg transition-all shadow-md ${
                                     report.status === 'Pending' ? 'bg-slate-900 text-white hover:bg-teal-600' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
                                   }`}
                                 >
@@ -1267,6 +1334,470 @@ const AdminDashboard = () => {
                </section>
             </div>
           )}
+
+          {activeTab === 'categories' && (() => {
+            const handleAddCategory = async (e) => {
+              e.preventDefault();
+              if (!newCategoryLabel.trim() || !newCategoryValue.trim()) {
+                alert('Both label and value are required');
+                return;
+              }
+              try {
+                const formData = new FormData();
+                formData.append('label', newCategoryLabel.trim());
+                formData.append('value', newCategoryValue.trim().toLowerCase().replace(/\s+/g, '_'));
+                if (newCategoryImage) formData.append('image', newCategoryImage);
+
+                const res = await fetch('/api/categories', {
+                  method: 'POST',
+                  body: formData,
+                });
+                const data = await res.json();
+                if (data.success) {
+                  setNewCategoryLabel('');
+                  setNewCategoryValue('');
+                  setNewCategoryImage(null);
+                  // Reset file input
+                  const fileInput = document.getElementById('cat-image-input');
+                  if (fileInput) fileInput.value = '';
+                  fetchDashboardData();
+                } else {
+                  alert(data.message || 'Failed to add category');
+                }
+              } catch (err) {
+                console.error(err);
+                alert('Error adding category');
+              }
+            };
+
+            const handleDeleteCategory = async (id) => {
+              openConfirm({
+                title: 'Delete Category',
+                message: 'This will permanently delete this category. Professionals using this category will not be affected. Continue?',
+                confirmText: 'Delete Category',
+                onConfirm: async () => {
+                  try {
+                    const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (data.success) fetchDashboardData();
+                    else alert(data.message || 'Failed to delete category');
+                  } catch (err) {
+                    alert('Error deleting category');
+                  }
+                },
+                type: 'danger'
+              });
+            };
+
+            return (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <section>
+                  <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+                    <div>
+                      <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900">Service Categories</h1>
+                      <p className="text-slate-500 font-medium uppercase tracking-wider text-[9px]">Manage categories available for professional registration</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Add Category Form */}
+                    <div className="lg:col-span-1">
+                      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 sticky top-24">
+                        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-5 flex items-center gap-2">
+                          <Plus size={16} className="text-teal-500" /> Add New Category
+                        </h3>
+                        <form onSubmit={handleAddCategory} className="space-y-4">
+                          <div>
+                            <label className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Display Label</label>
+                            <input
+                              type="text"
+                              value={newCategoryLabel}
+                              onChange={(e) => {
+                                setNewCategoryLabel(e.target.value);
+                                setNewCategoryValue(e.target.value.toLowerCase().replace(/\s+/g, '_'));
+                              }}
+                              placeholder="e.g. House Cleaning"
+                              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all placeholder:text-slate-400"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Value / Slug</label>
+                            <input
+                              type="text"
+                              value={newCategoryValue}
+                              onChange={(e) => setNewCategoryValue(e.target.value)}
+                              placeholder="e.g. house_cleaning"
+                              className="w-full px-3 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all placeholder:text-slate-400 font-mono"
+                              required
+                            />
+                            <p className="text-[9px] text-slate-400 mt-1">Auto-generated from label. Used internally.</p>
+                          </div>
+
+                          {/* Cover Image Upload */}
+                          <div>
+                            <label className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Cover Image (Optional)</label>
+                            <label
+                              htmlFor="cat-image-input"
+                              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-200 rounded-xl cursor-pointer hover:border-teal-400 hover:bg-teal-50/30 transition-all group relative overflow-hidden"
+                            >
+                              {newCategoryImage ? (
+                                <img
+                                  src={URL.createObjectURL(newCategoryImage)}
+                                  alt="preview"
+                                  className="w-full h-full object-cover rounded-xl"
+                                />
+                              ) : (
+                                <div className="flex flex-col items-center gap-2 text-slate-400 group-hover:text-teal-500 transition-colors">
+                                  <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-teal-100 flex items-center justify-center transition-colors">
+                                    <Plus size={20} />
+                                  </div>
+                                  <p className="text-[10px] font-semibold uppercase tracking-wider">Upload Image</p>
+                                  <p className="text-[9px]">JPG, PNG up to 50MB</p>
+                                </div>
+                              )}
+                              <input
+                                id="cat-image-input"
+                                type="file"
+                                accept="image/jpeg,image/jpg,image/png"
+                                className="hidden"
+                                onChange={(e) => setNewCategoryImage(e.target.files[0] || null)}
+                              />
+                            </label>
+                            {newCategoryImage && (
+                              <button
+                                type="button"
+                                onClick={() => { setNewCategoryImage(null); const f = document.getElementById('cat-image-input'); if(f) f.value=''; }}
+                                className="mt-1.5 text-[9px] text-rose-500 hover:text-rose-700 font-semibold uppercase tracking-wider flex items-center gap-1"
+                              >
+                                <X size={11} /> Remove Image
+                              </button>
+                            )}
+                          </div>
+
+                          <button
+                            type="submit"
+                            className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg shadow-teal-600/20 hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
+                          >
+                            <Plus size={16} /> Add Category
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+
+                    {/* Categories List */}
+                    <div className="lg:col-span-2">
+                      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                        <div className="flex items-center justify-between mb-5">
+                          <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                            <Compass size={16} className="text-orange-500" /> Active Categories
+                            <span className="px-2 py-0.5 bg-teal-50 text-teal-600 rounded-md text-[9px] font-black border border-teal-100">{systemCategories.length}</span>
+                          </h3>
+                        </div>
+
+                        {systemCategories.length === 0 ? (
+                          <div className="py-20 text-center">
+                            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                              <Plus size={28} className="text-slate-300" />
+                            </div>
+                            <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No Categories Added Yet</p>
+                            <p className="text-[10px] text-slate-400 mt-1">Use the form to add your first service category.</p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {systemCategories.map((cat) => {
+                              const imgSrc = cat.image
+                                ? (cat.image.startsWith('http') ? cat.image : `/${cat.image.replace(/\\/g, '/')}`)
+                                : null;
+                              return (
+                                <div
+                                  key={cat._id}
+                                  className="group relative rounded-2xl overflow-hidden border border-slate-100 hover:border-teal-200 shadow-sm hover:shadow-md transition-all"
+                                >
+                                  {imgSrc ? (
+                                    <div className="h-28 overflow-hidden">
+                                      <img src={imgSrc} alt={cat.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent" />
+                                    </div>
+                                  ) : (
+                                    <div className="h-28 bg-gradient-to-br from-teal-50 to-slate-100 flex items-center justify-center">
+                                      <Compass size={36} className="text-teal-300" />
+                                    </div>
+                                  )}
+                                  <div className={`p-4 ${imgSrc ? 'absolute bottom-0 left-0 right-0 text-white' : 'bg-white'}`}>
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div>
+                                        <p className={`font-bold text-sm ${imgSrc ? 'text-white' : 'text-slate-900'}`}>{cat.label}</p>
+                                        <p className={`text-[9px] font-mono font-semibold mt-0.5 ${imgSrc ? 'text-white/70' : 'text-slate-400'}`}>{cat.value}</p>
+                                      </div>
+                                      <button
+                                        onClick={() => handleDeleteCategory(cat._id)}
+                                        className="p-1.5 bg-rose-500/90 hover:bg-rose-600 text-white rounded-lg transition-all opacity-0 group-hover:opacity-100 shadow-md"
+                                        title="Delete Category"
+                                      >
+                                        <Trash2 size={13} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            );
+          })()}
+
+          {activeTab === 'calendar' && (() => {
+            const calendarYear = calendarDate.getFullYear();
+            const calendarMonth = calendarDate.getMonth();
+            const calendarDaysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+            const calendarFirstDayIndex = new Date(calendarYear, calendarMonth, 1).getDay();
+            const calendarPrevDaysInMonth = new Date(calendarYear, calendarMonth, 0).getDate();
+            
+            const cells = [];
+            
+            // Previous month padding days
+            for (let i = calendarFirstDayIndex - 1; i >= 0; i--) {
+              const day = calendarPrevDaysInMonth - i;
+              const prevMonthDate = new Date(calendarYear, calendarMonth - 1, day);
+              cells.push({
+                date: prevMonthDate,
+                isCurrentMonth: false,
+                dayNumber: day
+              });
+            }
+            
+            // Current month days
+            for (let i = 1; i <= calendarDaysInMonth; i++) {
+              const currentMonthDate = new Date(calendarYear, calendarMonth, i);
+              cells.push({
+                date: currentMonthDate,
+                isCurrentMonth: true,
+                dayNumber: i
+              });
+            }
+            
+            // Next month padding days
+            const remainingCells = 42 - cells.length;
+            for (let i = 1; i <= remainingCells; i++) {
+              const nextMonthDate = new Date(calendarYear, calendarMonth + 1, i);
+              cells.push({
+                date: nextMonthDate,
+                isCurrentMonth: false,
+                dayNumber: i
+              });
+            }
+
+            return (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <section>
+                  <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+                    <div>
+                      <h1 className="text-2xl font-bold tracking-tight mb-1 text-slate-900">Administrative Scheduler</h1>
+                      <p className="text-slate-500 font-medium uppercase tracking-wider text-[9px]">Coordinate verifications, audits, and custom reminders</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Month Calendar Grid */}
+                    <div className="lg:col-span-2 space-y-4">
+                      <div className="flex justify-between items-center bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-md">
+                        <h2 className="text-base font-bold text-slate-900 tracking-tight select-none">
+                          {calendarDate.toLocaleString('default', { month: 'long' })} {calendarYear}
+                        </h2>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => setCalendarDate(new Date(calendarYear, calendarMonth - 1, 1))}
+                            className="p-1.5 bg-slate-50 border border-slate-100 rounded-lg hover:bg-slate-100 transition-all text-slate-600 hover:text-teal-600 active:scale-95 flex items-center justify-center"
+                          >
+                            <ChevronLeft size={14} />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setCalendarDate(new Date());
+                              setSelectedCalendarDate(new Date());
+                            }}
+                            className="px-3 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 font-semibold text-[9px] uppercase tracking-wider rounded-lg transition-all active:scale-95"
+                          >
+                            Today
+                          </button>
+                          <button 
+                            onClick={() => setCalendarDate(new Date(calendarYear, calendarMonth + 1, 1))}
+                            className="p-1.5 bg-slate-50 border border-slate-100 rounded-lg hover:bg-slate-100 transition-all text-slate-600 hover:text-teal-600 active:scale-95 flex items-center justify-center"
+                          >
+                            <ChevronRight size={14} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                        {/* Day Names Header */}
+                        <div className="grid grid-cols-7 gap-1.5 mb-2 text-center text-slate-400 text-[9px] font-semibold uppercase tracking-wider">
+                          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+                            <div key={d} className="py-1">{d}</div>
+                          ))}
+                        </div>
+                        
+                        {/* Days Grid */}
+                        <div className="grid grid-cols-7 gap-2">
+                          {cells.map((cell, idx) => {
+                            const dateStr = getLocalDateString(cell.date);
+                            const dayTasks = calendarTasks.filter(t => t.date === dateStr);
+                            const isSelected = getLocalDateString(selectedCalendarDate) === dateStr;
+                            const isToday = getLocalDateString(new Date()) === dateStr;
+                            
+                            return (
+                              <div
+                                key={idx}
+                                onClick={() => setSelectedCalendarDate(cell.date)}
+                                className={`aspect-square rounded-xl p-1.5 flex flex-col justify-between border cursor-pointer transition-all active:scale-95 relative group ${
+                                  !cell.isCurrentMonth ? 'bg-slate-50/10 border-transparent text-slate-300' :
+                                  isSelected ? 'bg-teal-50 border-teal-500/30 ring-2 ring-teal-500/30 shadow-md shadow-teal-50/50 text-teal-600' :
+                                  isToday ? 'bg-orange-50/50 border-orange-500/30 text-orange-600' :
+                                  'bg-slate-50/40 border-slate-100 text-slate-700 hover:bg-slate-50 hover:border-slate-200'
+                                }`}
+                              >
+                                <span className={`text-[10px] font-bold select-none ${isToday && !isSelected ? 'text-orange-600' : ''}`}>
+                                  {cell.dayNumber}
+                                </span>
+                                
+                                {dayTasks.length > 0 && (
+                                  <div className="flex gap-0.5 flex-wrap items-center mt-0.5">
+                                    {dayTasks.length <= 2 ? (
+                                      dayTasks.map(t => (
+                                        <span 
+                                          key={t.id} 
+                                          className={`w-1 h-1 rounded-full ${
+                                            t.completed ? 'bg-slate-300' :
+                                            t.category === 'verification' ? 'bg-orange-500' :
+                                            t.category === 'maintenance' ? 'bg-blue-500' :
+                                            'bg-teal-500'
+                                          }`}
+                                        />
+                                      ))
+                                    ) : (
+                                      <span className="text-[7px] font-bold uppercase tracking-tight bg-teal-100 text-teal-700 px-0.5 rounded select-none">
+                                        +{dayTasks.length}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Task Panel & Reminders */}
+                    <div className="space-y-4">
+                      <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 space-y-4">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                          <div>
+                            <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Administrative Schedule</p>
+                            <h3 className="text-base font-bold text-slate-900 select-none">
+                              {selectedCalendarDate.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </h3>
+                          </div>
+                          <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600">
+                            <Calendar size={14} />
+                          </div>
+                        </div>
+                        
+                        {/* Active Date Tasks List */}
+                        <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                          {calendarTasks.filter(t => t.date === getLocalDateString(selectedCalendarDate)).length === 0 ? (
+                            <div className="text-center py-8">
+                              <Clock className="w-6 h-6 text-slate-300 mx-auto mb-1" />
+                              <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider select-none">No activities scheduled</p>
+                            </div>
+                          ) : (
+                            calendarTasks
+                              .filter(t => t.date === getLocalDateString(selectedCalendarDate))
+                              .map(task => (
+                                <div 
+                                  key={task.id} 
+                                  className={`p-3 rounded-xl border flex items-center justify-between gap-2 group transition-all ${
+                                    task.completed ? 'bg-slate-50/50 border-slate-50 text-slate-400' : 'bg-slate-50 border-slate-100'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <input 
+                                      type="checkbox" 
+                                      checked={task.completed}
+                                      onChange={() => handleToggleCalendarTask(task.id)}
+                                      className="w-3.5 h-3.5 rounded border-slate-300 text-teal-600 focus:ring-teal-500/20 cursor-pointer"
+                                    />
+                                    <div>
+                                      <p className={`text-[11px] font-bold ${task.completed ? 'line-through' : 'text-slate-800'}`}>{task.title}</p>
+                                      <span className={`text-[7px] font-semibold uppercase tracking-wider px-1 py-0.5 rounded mt-0.5 inline-block ${
+                                        task.category === 'verification' ? 'bg-orange-100 text-orange-600 border border-orange-200' :
+                                        task.category === 'maintenance' ? 'bg-blue-100 text-blue-600 border border-blue-200' :
+                                        'bg-teal-100 text-teal-600 border border-teal-200'
+                                      }`}>
+                                        {task.category}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <button 
+                                    onClick={() => handleDeleteCalendarTask(task.id)}
+                                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-rose-500 hover:bg-white rounded-lg shadow-sm transition-all"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+                              ))
+                          )}
+                        </div>
+
+                        {/* Task Creation Form */}
+                        <form onSubmit={handleAddCalendarTask} className="pt-3 border-t border-slate-100 space-y-3">
+                          <div>
+                            <label className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">New Event / Reminder</label>
+                            <input 
+                              type="text" 
+                              value={newTaskTitle}
+                              onChange={(e) => setNewTaskTitle(e.target.value)}
+                              placeholder="E.g. Database backup..." 
+                              className="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all placeholder:text-slate-400"
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Category</label>
+                              <select 
+                                value={newTaskCategory}
+                                onChange={(e) => setNewTaskCategory(e.target.value)}
+                                className="w-full px-2 py-2 bg-slate-50 border border-slate-100 rounded-lg text-[9px] font-semibold uppercase tracking-wider text-slate-600 focus:outline-none transition-all cursor-pointer hover:bg-slate-100"
+                              >
+                                <option value="verification">Verification</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="custom">Custom Task</option>
+                              </select>
+                            </div>
+                            <div className="flex items-end">
+                              <button 
+                                type="submit"
+                                className="w-full py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold text-[9px] uppercase tracking-wider shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-1"
+                              >
+                                <Plus size={12} /> Add Event
+                              </button>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            );
+          })()}
         </div>
       </main>
 
@@ -1501,6 +2032,118 @@ const AdminDashboard = () => {
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'categories' && (
+        <div className="space-y-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto p-6 lg:p-8">
+          <div className="bg-white p-6 lg:p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+            <h2 className="text-2xl font-bold tracking-tight mb-1 text-slate-900">Manage Professional Categories</h2>
+            <p className="text-slate-500 font-medium uppercase tracking-wider text-[9px] mb-6">Add or view service categories</p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-100 items-end">
+              <div className="flex-1 space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Category Value (Unique ID)</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. plumber" 
+                  value={newCategoryValue} 
+                  onChange={e => setNewCategoryValue(e.target.value.toLowerCase().replace(/\s+/g, '_'))} 
+                  className="w-full border-none ring-1 ring-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none" 
+                />
+              </div>
+              <div className="flex-1 space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Display Label (With Emoji)</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. 🔧 Plumber" 
+                  value={newCategoryLabel} 
+                  onChange={e => setNewCategoryLabel(e.target.value)} 
+                  className="w-full border-none ring-1 ring-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none" 
+                />
+              </div>
+              <div className="flex-1 space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cover Image (Optional)</label>
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={e => setNewCategoryImage(e.target.files[0])} 
+                  className="w-full border-none ring-1 ring-slate-200 rounded-xl p-2 text-sm bg-white cursor-pointer" 
+                />
+              </div>
+              <div>
+                <button 
+                  onClick={async () => {
+                    if (!newCategoryValue || !newCategoryLabel) return alert('Fill both value and label fields');
+                    try {
+                      const formData = new FormData();
+                      formData.append('value', newCategoryValue);
+                      formData.append('label', newCategoryLabel);
+                      if (newCategoryImage) {
+                        formData.append('image', newCategoryImage);
+                      }
+
+                      const res = await fetch('/api/categories', {
+                        method: 'POST',
+                        body: formData
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        setNewCategoryValue('');
+                        setNewCategoryLabel('');
+                        setNewCategoryImage(null);
+                        // Clear the file input visually
+                        const fileInput = document.querySelector('input[type="file"]');
+                        if (fileInput) fileInput.value = '';
+                        fetchDashboardData();
+                      } else {
+                        alert(data.message || 'Error adding category');
+                      }
+                    } catch(e) { alert('Error adding category: ' + e.message); console.error(e); }
+                  }} 
+                  className="w-full sm:w-auto bg-teal-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-teal-700 transition-colors shadow-lg shadow-teal-200 flex items-center justify-center gap-2 h-11"
+                >
+                  <Plus size={16} /> Add Category
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider">Existing Categories</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {systemCategories.length === 0 ? (
+                  <p className="text-slate-500 text-sm">No dynamic categories added yet.</p>
+                ) : (
+                  systemCategories.map(cat => (
+                    <div key={cat._id} className="bg-white border border-slate-200 p-4 rounded-2xl flex justify-between items-center hover:border-teal-300 transition-colors shadow-sm gap-4">
+                      <div className="flex items-center gap-4 overflow-hidden">
+                        {cat.image ? (
+                           <img src={`/${cat.image.replace(/\\/g, '/')}`} alt={cat.label} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                        ) : (
+                           <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 text-slate-400 font-bold text-[10px]">NO IMG</div>
+                        )}
+                        <div className="overflow-hidden">
+                          <p className="font-bold text-slate-900 truncate">{cat.label}</p>
+                          <p className="text-xs text-slate-400 font-mono mt-1 truncate">{cat.value}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={async () => {
+                          if(window.confirm('Delete this category?')) {
+                            await fetch(`/api/categories/${cat._id}`, { method: 'DELETE' });
+                            fetchDashboardData();
+                          }
+                        }}
+                        className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex-shrink-0"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -102,7 +102,7 @@ const Login = () => {
           token: tokenResponse.access_token,
         });
 
-        const { token, userId, name, role } = res.data;
+        const { token, userId, name, role, verified } = res.data;
         
         // Save session data
         localStorage.setItem('token', token);
@@ -112,7 +112,20 @@ const Login = () => {
         localStorage.setItem("activeRole", role === "admin" ? "admin" : "user");
 
         setMessage("");
-        navigate('/dashboard');
+        
+        if (role === "admin") {
+          toast.success(t('welcome_back_admin') || 'Welcome back, Admin!');
+          setTimeout(() => {
+            navigate("/admin/dashboard");
+          }, 1500);
+        } else if (verified === false) {
+          navigate("/verify-otp");
+        } else {
+          toast.success(t('welcome_back_user') || 'Login successful!');
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 1500);
+        }
       } catch (err) {
         console.error('Google exchange error:', err);
         setMessage('Failed to complete Google Login: ' + (err.response?.data?.message || err.message));

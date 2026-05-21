@@ -691,6 +691,12 @@ export default function MessagePage() {
                                         placeholder="Type your message..."
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleSendMessage(e);
+                                            }
+                                        }}
                                         className="flex-1 bg-transparent border-none py-2 text-sm focus:ring-0 outline-none"
                                     />
                                     <button 

@@ -146,16 +146,28 @@ const SignupForm = () => {
           token: tokenResponse.access_token,
         });
 
-        const { token, userId, name, role } = res.data;
+        const { token, userId, name, role, verified } = res.data;
         
         // Save session data
         localStorage.setItem('token', token);
         localStorage.setItem('userId', userId);
         localStorage.setItem('userName', name);
         localStorage.setItem('userRole', role);
+        localStorage.setItem("activeRole", role === "admin" ? "admin" : "user");
 
-        toast.success('Google Login successful!');
-        navigate('/dashboard');
+        if (role === "admin") {
+          toast.success('Welcome back, Admin!');
+          setTimeout(() => {
+            navigate("/admin/dashboard");
+          }, 1500);
+        } else if (verified === false) {
+          navigate("/verify-otp");
+        } else {
+          toast.success('Google Login successful!');
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 1500);
+        }
       } catch (err) {
         console.error('Google exchange error:', err);
         toast.error('Failed to complete Google Login: ' + (err.response?.data?.message || err.message));

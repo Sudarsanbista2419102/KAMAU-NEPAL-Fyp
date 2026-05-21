@@ -51,6 +51,12 @@ const CATEGORY_IMAGE_MAP = {
     'Graphic Designer': 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&q=80&w=400',
     'Developer': 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=400',
     'Logo Designer': 'https://images.unsplash.com/photo-1572044162444-ad60f128bde7?auto=format&fit=crop&q=80&w=400',
+    'Tutoring': 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=400',
+    'Mechanic': '/assets/categories/mechanic.png',
+    'Painting': 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?auto=format&fit=crop&q=80&w=400',
+    'Gardening': 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&q=80&w=400',
+    'Freelancer': 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=400',
+    'Waiter': 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&q=80&w=400',
 };
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&q=80&w=400';
 
@@ -64,6 +70,7 @@ export default function ExploreJobs() {
     const scrollContainerRef = useRef(null);
 
     const [professionals, setProfessionals] = useState([]);
+    const [categoriesData, setCategoriesData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState(location.state?.searchQuery || '');
     const [selectedLocation, setSelectedLocation] = useState(() => {
@@ -98,11 +105,21 @@ export default function ExploreJobs() {
     // Extract dynamic categories from the fetched professionals
     const dynamicCategories = useMemo(() => {
         const uniqueCats = [...new Set(professionals.map(p => p.title))];
-        return uniqueCats.map(title => ({
-            title,
-            image: CATEGORY_IMAGE_MAP[title] || DEFAULT_IMAGE
-        }));
-    }, [professionals]);
+        return uniqueCats.map(title => {
+            const normalizedTitle = title.toLowerCase().replace(/\s+/g, '_');
+            const matchedCat = categoriesData.find(c => c.value?.toLowerCase() === normalizedTitle || c.label?.toLowerCase().includes(title.toLowerCase()));
+            
+            let imageUrl = CATEGORY_IMAGE_MAP[title] || DEFAULT_IMAGE;
+            if (matchedCat && matchedCat.image) {
+                imageUrl = matchedCat.image.startsWith('http') ? matchedCat.image : `/${matchedCat.image.replace(/\\/g, '/')}`;
+            }
+
+            return {
+                title,
+                image: imageUrl
+            };
+        });
+    }, [professionals, categoriesData]);
 
     useEffect(() => {
         const fetchProfessionals = async () => {
@@ -164,6 +181,20 @@ export default function ExploreJobs() {
         };
 
         fetchProfessionals();
+    }, []);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await axios.get('/api/categories');
+                if (response.data.success) {
+                    setCategoriesData(response.data.data);
+                }
+            } catch (err) {
+                console.error('Error fetching categories:', err);
+            }
+        };
+        fetchCategories();
     }, []);
 
     const filteredJobs = useMemo(() => {
@@ -569,20 +600,7 @@ export default function ExploreJobs() {
                                     </div>
                                 </div>
 
-                                {/* Progress Bar */}
-                                <div className="mb-8 px-1">
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <span className="text-[10px] font-black text-slate-400 uppercase">Success Rate</span>
-                                        <span className="text-[10px] font-black text-teal-600">{job.completedJobs > 0 ? '98%' : 'New Pro'}</span>
-                                    </div>
-                                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                        <motion.div 
-                                            initial={{ width: 0 }}
-                                            animate={{ width: job.completedJobs > 0 ? '98%' : '5%' }}
-                                            className="h-full bg-teal-500 rounded-full" 
-                                        />
-                                    </div>
-                                </div>
+
 
                                 {/* Actions */}
                                 <div className="space-y-3">

@@ -29,7 +29,7 @@ import { useTranslation } from "../utils/LanguageContext";
 import OptimizedImage from "../components/OptimizedImage";
 import { getUnreadCount } from "../services/messageService";
 
-const Dashboard = () => {
+const Dashboard = ({ onProfileClick }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -327,7 +327,6 @@ const Dashboard = () => {
   const handleHireNowClick = () => {
     setShowHireForm(true);
     setHireFormErrors({});
-    // Pre-fill location from user's saved location
     if (user.location && user.location !== "Not set") {
       setHireFormData(prev => ({ ...prev, location: user.location }));
     }
@@ -356,15 +355,12 @@ const Dashboard = () => {
     }
 
     try {
-      // Get userId from localStorage
       const userId = localStorage.getItem("userId");
-
       if (!userId) {
         alert("Error: User ID not found. Please log in again.");
         return;
       }
 
-      // Create booking data object
       const bookingData = {
         userId,
         professionalId: selectedJob.professionalId || null,
@@ -380,9 +376,7 @@ const Dashboard = () => {
         rating: selectedJob.rating || 0
       };
 
-      // Send booking to backend
       const response = await createBooking(bookingData);
-
       if (response.success) {
         alert(`✅ Booking confirmed!\n\nService: ${selectedJob.title}\nProvider: ${selectedJob.company}\n\nYour booking has been sent to the provider.`);
         setShowHireForm(false);
@@ -430,7 +424,6 @@ const Dashboard = () => {
         title: "Service Confirmation",
         message: `Mark service "${selectedJob.title}" as taken? This will update your services history and profile metrics.`,
         onConfirm: () => {
-          // Update the job status to "Service Taken"
           const updatedJob = { ...selectedJob, status: "Service Taken" };
           setSelectedJob(updatedJob);
 
@@ -448,10 +441,6 @@ const Dashboard = () => {
             changeTaken: `+${(parseInt(prev.changeTaken.replace("+", "")) || 0) + 1}`
           }));
 
-          // Log the action
-          console.log(`Service taken: ${selectedJob.title} from ${selectedJob.company}`);
-
-          // Save to localStorage using the storage service
           const serviceRecord = {
             title: selectedJob.title,
             provider: selectedJob.company,
@@ -464,10 +453,7 @@ const Dashboard = () => {
             date: new Date().toLocaleDateString()
           };
 
-          console.log("Service record to save:", serviceRecord);
           addTakenService(serviceRecord);
-          console.log("Service saved successfully");
-
           alert(`✅ Service marked as taken!\nService: ${selectedJob.title}\nProvider: ${selectedJob.company}\n\nThe service has been added to your services taken count.`);
         },
         type: 'info'

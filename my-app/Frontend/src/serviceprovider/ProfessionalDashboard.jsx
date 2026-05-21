@@ -6,7 +6,8 @@ import axios from 'axios';
 import {
   X, Menu, Search, Bell, Zap, Compass, Target, Orbit, Eye,
   Power, SwitchCamera, Cpu, Activity, ChevronRight,
-  MessageSquare, DollarSign, User, Mail, Phone, MapPin, UserCircle, ShieldCheck, HelpCircle, ChevronLeft, ShieldAlert
+  MessageSquare, DollarSign, User, Mail, Phone, MapPin, UserCircle, ShieldCheck, HelpCircle, ChevronLeft, ShieldAlert,
+  Download, TrendingUp
 } from 'lucide-react';
 
 import OptimizedImage from '../components/OptimizedImage';
@@ -35,6 +36,9 @@ const ProfessionalDashboard = () => {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [isUpdatingImage, setIsUpdatingImage] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [earningsTimeframe, setEarningsTimeframe] = useState('monthly');
+  const [earningsSearch, setEarningsSearch] = useState('');
+  const [earningsPaymentFilter, setEarningsPaymentFilter] = useState('All');
 
   const [stats, setStats] = useState({
     pendingRequests: 0,
@@ -315,35 +319,333 @@ const ProfessionalDashboard = () => {
     <ProfessionalMessages />
   );
 
-  const renderEarnings = () => (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">{t('monthly_revenue')}</p>
-            <h3 className="text-5xl font-black text-slate-900 tracking-tighter">रू {stats.totalEarnings.toLocaleString()}</h3>
-          </div>
-          <div className="flex gap-2">
-            {[t('weekly'), t('monthly'), t('annual')].map(p => (
-              <button key={p} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${p === t('monthly') ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}>{p}</button>
-            ))}
-          </div>
+  const renderEarnings = () => {
+    // 1. Helper to parse Nepalese Rupee string to numeric value
+    const parseCost = (costStr) => {
+      if (!costStr) return 0;
+      // Extract numbers, decimal point
+      const amount = parseFloat(costStr.replace(/[^\d.]/g, '')) || 0;
+      return amount;
+    };
+
+    // 2. Filter completed bookings
+    const completedBookings = allRequests.filter(r => r.status === 'Completed');
+
+    // 3. Compute stats
+    const totalEarningsVal = completedBookings.reduce((sum, b) => sum + parseCost(b.totalCost), 0);
+    const paidEarningsVal = completedBookings
+      .filter(b => b.paymentStatus === 'Paid')
+      .reduce((sum, b) => sum + parseCost(b.totalCost), 0);
+    const pendingEarningsVal = completedBookings
+      .filter(b => b.paymentStatus !== 'Paid')
+      .reduce((sum, b) => sum + parseCost(b.totalCost), 0);
+    const completedMissionsCount = completedBookings.length;
+
+    // 4. Timeframe calculations
+    const getChartData = () => {
+      let data = [];
+      let labels = [];
+
+      if (earningsTimeframe === 'weekly') {
+        // Last 7 days including today
+        const days = [];
+        const lang = localStorage.getItem('language') || 'en';
+        
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          days.push(d);
+        }
+
+        const enDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const neDays = ['आइत', 'सोम', 'मंगल', 'बुध', 'बिही', 'शुक्र', 'शनि'];
+
+        labels = days.map(d => {
+          const dayIdx = d.getDay();
+          return lang === 'ne' ? neDays[dayIdx] : enDays[dayIdx];
+        });
+
+        data = days.map(d => {
+          const dateStr = d.toDateString();
+          const dayBookings = completedBookings.filter(b => {
+            const bDateObj = new Date(b.bookingDate);
+            return bDateObj.toDateString() === dateStr;
+          });
+          return dayBookings.reduce((sum, b) => sum + parseCost(b.totalCost), 0);
+        });
+
+      } else if (earningsTimeframe === 'monthly') {
+        // 12 months of the current year
+        const lang = localStorage.getItem('language') || 'en';
+        const enMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const neMonthsGreg = ['जनवरी', 'फेब्रुअरी', 'मार्च', 'अप्रिल', 'मे', 'जुन', 'जुलाई', 'अगस्त', 'सेप्टेम्बर', 'अक्टोबर', 'नोभेम्बर', 'डिसेम्बर'];
+        
+        labels = lang === 'ne' ? neMonthsGreg : enMonths;
+
+        const currentYear = new Date().getFullYear();
+        data = Array(12).fill(0).map((_, mIdx) => {
+          const monthBookings = completedBookings.filter(b => {
+            const bDate = new Date(b.bookingDate);
+            return bDate.getFullYear() === currentYear && bDate.getMonth() === mIdx;
+          });
+          return monthBookings.reduce((sum, b) => sum + parseCost(b.totalCost), 0);
+        });
+
+      } else if (earningsTimeframe === 'annual') {
+        // Last 5 years
+        const currentYear = new Date().getFullYear();
+        labels = [];
+        for (let i = 4; i >= 0; i--) {
+          labels.push((currentYear - i).toString());
+        }
+
+        data = labels.map(yearStr => {
+          const yearInt = parseInt(yearStr);
+          const yearBookings = completedBookings.filter(b => {
+            const bDate = new Date(b.bookingDate);
+            return bDate.getFullYear() === yearInt;
+          });
+          return yearBookings.reduce((sum, b) => sum + parseCost(b.totalCost), 0);
+        });
+      }
+
+      return { labels, data };
+    };
+
+    const { labels: chartLabels, data: chartValues } = getChartData();
+    const maxChartValue = Math.max(...chartValues, 1);
+
+    // 5. Filter & Search completed bookings for history list
+    const filteredCompletedBookings = completedBookings.filter(b => {
+      const searchLower = earningsSearch.toLowerCase();
+      const matchesSearch = 
+        (b.fullName && b.fullName.toLowerCase().includes(searchLower)) ||
+        (b.serviceTitle && b.serviceTitle.toLowerCase().includes(searchLower)) ||
+        (b.totalCost && b.totalCost.toLowerCase().includes(searchLower));
+
+      let matchesPayment = true;
+      if (earningsPaymentFilter === 'Paid') {
+        matchesPayment = b.paymentStatus === 'Paid';
+      } else if (earningsPaymentFilter === 'Unpaid') {
+        matchesPayment = b.paymentStatus !== 'Paid';
+      }
+
+      return matchesSearch && matchesPayment;
+    });
+
+    return (
+      <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {/* Micro Stats Cards for Earnings */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            {
+              label: 'LIFETIME REVENUE',
+              value: `रू ${totalEarningsVal.toLocaleString()}`,
+              sub: 'All time completed earnings',
+              icon: DollarSign,
+              color: 'from-slate-700 to-slate-900',
+              badge: 'Gross Value'
+            },
+            {
+              label: 'PAID EARNINGS',
+              value: `रू ${paidEarningsVal.toLocaleString()}`,
+              sub: 'Settled & cleared transactions',
+              icon: ShieldCheck,
+              color: 'from-emerald-500 to-emerald-600',
+              badge: 'Settled'
+            },
+            {
+              label: 'PENDING PAYOUTS',
+              value: `रू ${pendingEarningsVal.toLocaleString()}`,
+              sub: 'Unpaid / Cash in transit',
+              icon: Activity,
+              color: 'from-amber-500 to-amber-600',
+              badge: 'Pending'
+            },
+            {
+              label: 'COMPLETED MISSIONS',
+              value: completedMissionsCount,
+              sub: 'Total tasks fully delivered',
+              icon: Target,
+              color: 'from-indigo-500 to-indigo-600',
+              badge: 'Deliveries'
+            }
+          ].map((card, i) => {
+            const Icon = card.icon;
+            return (
+              <div key={i} className="relative bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-md overflow-hidden group transition-all">
+                <div className="flex items-center justify-between mb-4 relative z-10">
+                  <div className={`p-3 rounded-2xl bg-gradient-to-br ${card.color} text-white shadow-sm`}>
+                    <Icon size={20} />
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-slate-50 px-2.5 py-1 rounded-full">{card.badge}</span>
+                </div>
+                <p className="text-3xl font-black text-slate-900 mb-1 relative z-10">{card.value}</p>
+                <p className="text-[10px] font-black text-slate-500 tracking-widest uppercase relative z-10">{card.label}</p>
+                <p className="text-[10px] text-slate-400 relative z-10 mt-1">{card.sub}</p>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Placeholder Chart */}
-        <div className="h-64 flex items-end gap-3 px-4">
-          {[40, 70, 45, 90, 65, 85, 100, 75, 55, 90, 110, 95].map((h, i) => (
-            <div key={i} className="flex-1 bg-gradient-to-t from-teal-500 to-teal-400 rounded-t-xl group relative cursor-pointer hover:scale-105 transition-transform" style={{ height: `${h}%` }}>
-              <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">रू {(h * 100).toLocaleString()}</div>
+        {/* Dynamic Chart Container */}
+        <div className="bg-white p-8 md:p-10 rounded-[40px] border border-slate-100 shadow-sm relative overflow-hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">{t('monthly_revenue')}</p>
+              <h3 className="text-5xl font-black text-slate-900 tracking-tighter flex items-baseline gap-2">
+                रू {totalEarningsVal.toLocaleString()}
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest font-mono">LIFETIME</span>
+              </h3>
             </div>
-          ))}
+            
+            {/* Timeframe Selector */}
+            <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+              {[
+                { id: 'weekly', label: t('weekly') },
+                { id: 'monthly', label: t('monthly') },
+                { id: 'annual', label: t('annual') }
+              ].map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => setEarningsTimeframe(p.id)}
+                  className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                    earningsTimeframe === p.id 
+                      ? 'bg-slate-900 text-white shadow-md' 
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Interactive Chart */}
+          {chartValues.some(val => val > 0) ? (
+            <div>
+              <div className="h-64 flex items-end gap-3 md:gap-4 px-4 border-b border-slate-50 pb-2">
+                {chartValues.map((val, i) => {
+                  const h = (val / maxChartValue) * 100;
+                  return (
+                    <div
+                      key={i}
+                      className="flex-1 bg-gradient-to-t from-teal-600 to-teal-400 rounded-t-xl group relative cursor-pointer hover:from-teal-500 hover:to-teal-300 transition-all duration-300 hover:scale-105"
+                      style={{ height: `${Math.max(h, 4)}%` }}
+                    >
+                      {/* Interactive Tooltip */}
+                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-md text-white text-[10px] font-black tracking-wider px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity shadow-xl z-20 border border-slate-800 pointer-events-none whitespace-nowrap">
+                        रू {val.toLocaleString()}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex justify-between mt-6 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest font-mono">
+                {chartLabels.map((lbl, idx) => (
+                  <span key={idx} className="w-12 text-center">{lbl}</span>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="h-64 flex flex-col items-center justify-center bg-slate-50/50 rounded-3xl border border-dashed border-slate-100 p-8 text-center">
+              <TrendingUp className="text-slate-300 w-12 h-12 mb-3 animate-pulse" />
+              <p className="text-xs font-black text-slate-500 uppercase tracking-wider">No completed service records found</p>
+              <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Earnings will visualize once your sessions are finalized and paid.</p>
+            </div>
+          )}
         </div>
-        <div className="flex justify-between mt-6 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          <span>Jan</span><span>Jul</span><span>Dec</span>
+
+        {/* Detailed Ledger Section */}
+        <div className="bg-white p-8 md:p-10 rounded-[40px] border border-slate-100 shadow-sm space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div>
+              <h4 className="text-2xl font-black tracking-tight text-slate-900">Earnings History & Invoices</h4>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Real-time ledger of completed services</p>
+            </div>
+            
+            {/* Search & Payment Filter */}
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+              <div className="relative group">
+                <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Search customer or service..."
+                  value={earningsSearch}
+                  onChange={(e) => setEarningsSearch(e.target.value)}
+                  className="bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500/10 focus:border-teal-500/30 transition-all w-full sm:w-56"
+                />
+              </div>
+
+              <select
+                value={earningsPaymentFilter}
+                onChange={(e) => setEarningsPaymentFilter(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-black uppercase tracking-wider text-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/10 focus:border-teal-500/30 transition-all cursor-pointer"
+              >
+                <option value="All">All Payments</option>
+                <option value="Paid">Paid</option>
+                <option value="Unpaid">Unpaid/Pending</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Table Container */}
+          {filteredCompletedBookings.length > 0 ? (
+            <div className="overflow-x-auto rounded-3xl border border-slate-100">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <th className="py-4.5 px-6">Customer</th>
+                    <th className="py-4.5 px-6">Service</th>
+                    <th className="py-4.5 px-6">Date</th>
+                    <th className="py-4.5 px-6">Earning</th>
+                    <th className="py-4.5 px-6 text-center">Status</th>
+                    <th className="py-4.5 px-6">Method</th>
+                    <th className="py-4.5 px-6 text-right">Invoices</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 text-xs font-semibold text-slate-600">
+                  {filteredCompletedBookings.map((b) => (
+                    <tr key={b._id} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="py-5 px-6 font-bold text-slate-900">{b.fullName}</td>
+                      <td className="py-5 px-6 font-bold text-slate-700">{b.serviceTitle}</td>
+                      <td className="py-5 px-6 text-slate-400 tracking-tight">{new Date(b.bookingDate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                      <td className="py-5 px-6 font-black text-slate-900">{b.totalCost}</td>
+                      <td className="py-5 px-6 text-center">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                          b.paymentStatus === 'Paid'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                            : 'bg-amber-50 text-amber-700 border border-amber-100'
+                        }`}>
+                          {b.paymentStatus === 'Paid' ? 'Paid' : 'Unpaid'}
+                        </span>
+                      </td>
+                      <td className="py-5 px-6 font-bold text-slate-500 uppercase tracking-widest text-[10px]">{b.paymentMethod || 'None'}</td>
+                      <td className="py-5 px-6 text-right">
+                        <button
+                          onClick={() => handleDownloadPDF(b)}
+                          className="p-2 bg-slate-50 hover:bg-teal-50 text-slate-400 hover:text-teal-600 rounded-xl transition-all inline-flex items-center justify-center hover:scale-105 border border-slate-100 hover:border-teal-100"
+                          title="Download Invoice PDF"
+                        >
+                          <Download size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center p-12 bg-slate-50/50 rounded-3xl border border-dashed border-slate-100 text-center">
+              <Search className="text-slate-300 w-10 h-10 mb-3 animate-pulse" />
+              <p className="text-xs font-black text-slate-500 uppercase tracking-wider">No matching transaction records</p>
+              <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Try relaxing your search terms or filter constraints.</p>
+            </div>
+          )}
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderProfile = () => (
     <div className="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

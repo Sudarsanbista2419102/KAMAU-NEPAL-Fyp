@@ -480,6 +480,12 @@ const ProfessionalMessages = () => {
                                     placeholder="Execute response mission..."
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleSendMessage(e);
+                                        }
+                                    }}
                                     className="flex-1 bg-transparent border-none py-3 text-xs font-bold text-slate-800 focus:ring-0 outline-none placeholder:text-slate-300 placeholder:italic"
                                 />
                                 <div className="flex items-center gap-1 pr-1">

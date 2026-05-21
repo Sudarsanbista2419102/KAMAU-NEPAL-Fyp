@@ -145,42 +145,17 @@ const HomePage = () => {
     const fetchCategories = async () => {
       try {
         setLoadingCategories(true);
-        const response = await axios.get('/api/professionals/categories');
+        const response = await axios.get('/api/categories');
         if (response.data.success) {
-          // Map categories to icons/images
-          const iconMap = {
-            'plumber': { type: 'image', value: '/assets/categories/plumbing.png' },
-            'plumbing': { type: 'image', value: '/assets/categories/plumbing.png' },
-            'dog walker': { type: 'emoji', value: '🐕' },
-            'cleaner': { type: 'image', value: '/assets/categories/cleaning.png' },
-            'cleaning': { type: 'image', value: '/assets/categories/cleaning.png' },
-            'carpenter': { type: 'image', value: '/assets/categories/carpentry.png' },
-            'carpentry': { type: 'image', value: '/assets/categories/carpentry.png' },
-            'robotics': { type: 'emoji', value: '🤖' },
-            'gas fitter': { type: 'emoji', value: '⛽' },
-            'car repair': { type: 'image', value: '/assets/categories/mechanic.png' },
-            'mechanic': { type: 'image', value: '/assets/categories/mechanic.png' },
-            'electrician': { type: 'image', value: '/assets/categories/electrical.png' },
-            'electrical': { type: 'image', value: '/assets/categories/electrical.png' },
-            'painter': { type: 'emoji', value: '🎨' },
-            'gardener': { type: 'image', value: '/assets/categories/gardening.png' },
-            'gardening': { type: 'image', value: '/assets/categories/gardening.png' },
-            'tutor': { type: 'emoji', value: '📚' },
-            'tutoring': { type: 'emoji', value: '📚' },
-            'freelancer': { type: 'emoji', value: '💻' },
-            'graphic_designer': { type: 'emoji', value: '🎨' },
-            'logo_designer': { type: 'emoji', value: '✨' },
-            'developer': { type: 'emoji', value: '⌨️' },
-            'waiter': { type: 'emoji', value: '🤵' }
-          };
-
           const dynamicCategories = response.data.data.map(cat => {
-            const config = iconMap[cat.toLowerCase()] || { type: 'emoji', value: '💼' };
+            const imgSrc = cat.image 
+              ? (cat.image.startsWith('http') ? cat.image : `/${cat.image.replace(/\\/g, '/')}`)
+              : null;
             return {
-              name: cat.charAt(0).toUpperCase() + cat.slice(1),
-              icon: config.value,
-              iconType: config.type,
-              id: cat
+              name: cat.label,
+              icon: imgSrc || '💼',
+              iconType: imgSrc ? 'image' : 'emoji',
+              id: cat.value
             };
           });
 

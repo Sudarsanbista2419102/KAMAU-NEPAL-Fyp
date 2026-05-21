@@ -1,23 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Save, User, MapPin, DollarSign, Phone, Bio, Briefcase, Clock, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-
-const SERVICE_CATEGORIES = [
-  { value: 'plumbing', label: 'Plumbing' },
-  { value: 'electrical', label: 'Electrical' },
-  { value: 'carpentry', label: 'Carpentry' },
-  { value: 'cleaning', label: 'Cleaning' },
-  { value: 'painting', label: 'Painting' },
-  { value: 'gardening', label: 'Gardening' },
-  { value: 'mechanic', label: 'Mechanic' },
-  { value: 'tutoring', label: 'Tutoring' },
-  { value: 'freelancer', label: 'Freelancer' },
-  { value: 'graphic_designer', label: 'Graphic Designer' },
-  { value: 'logo_designer', label: 'Logo Designer' },
-  { value: 'developer', label: 'Developer' },
-  { value: 'waiter', label: 'Waiter' }
-];
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -36,6 +20,23 @@ const EditProfileModal = ({ isOpen, onClose, professionalData, onUpdate }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [serviceCategories, setServiceCategories] = useState([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const fetchCategories = async () => {
+        try {
+          const res = await axios.get('/api/categories');
+          if (res.data && res.data.success) {
+            setServiceCategories(res.data.data.map(c => ({ value: c.value, label: c.label })));
+          }
+        } catch (err) {
+          console.error("Failed to fetch categories", err);
+        }
+      };
+      fetchCategories();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -191,7 +192,7 @@ const EditProfileModal = ({ isOpen, onClose, professionalData, onUpdate }) => {
                             onChange={handleInputChange}
                             className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-teal-500/10 focus:border-teal-500/40 outline-none transition-all appearance-none cursor-pointer"
                           >
-                            {SERVICE_CATEGORIES.map(cat => <option key={cat.value} value={cat.value}>{cat.label}</option>)}
+                            {serviceCategories.map(cat => <option key={cat.value} value={cat.value}>{cat.label}</option>)}
                           </select>
                         </div>
                       </div>

@@ -4,18 +4,42 @@ import { Mail } from 'lucide-react';
 import BackButton from '../components/BackButton';
 
 
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Reset password for:', email);
-    // In a real app, you would send reset email
-    setIsSubmitted(true);
-    setTimeout(() => navigate('/verify-otp'), 1500);
+    
+    if (!email) {
+      toast.error('Please enter your email address');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axios.post('/api/users/forgot-password', { email });
+      
+      // Save userId for the reset password step
+      if (response.data.userId) {
+        sessionStorage.setItem('resetUserId', response.data.userId);
+      }
+      
+      setIsSubmitted(true);
+      toast.success(response.data.message || 'Reset link sent!');
+      
+      setTimeout(() => navigate('/reset-password'), 2000);
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Failed to send reset link. Please try again.';
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-blue-50 flex flex-col">
@@ -60,9 +84,10 @@ const ForgotPassword = () => {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-teal-600 to-teal-700 text-white font-medium py-3 px-4 rounded-lg hover:opacity-90 transition"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-teal-600 to-teal-700 text-white font-medium py-3 px-4 rounded-lg hover:opacity-90 transition disabled:opacity-50"
               >
-                Send Reset Link
+                {loading ? 'Sending...' : 'Send Reset Link'}
               </button>
             </form>
           ) : (
@@ -77,7 +102,7 @@ const ForgotPassword = () => {
                 We've sent a reset link to <span className="font-semibold">{email}</span>
               </p>
               <p className="mt-4 text-sm text-gray-500">
-                Redirecting to OTP verification...
+                Redirecting to password reset...
               </p>
             </div>
           )}

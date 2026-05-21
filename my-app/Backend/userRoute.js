@@ -69,11 +69,13 @@ router.get("/", (req, res) => {
 ========================= */
 router.post("/signup", async (req, res) => {
   try {
-    const { name, firstName, lastName, email, password, address } = req.body;
+    let { name, firstName, lastName, email, password, address } = req.body;
 
     if (!name || !email || !password || !address) {
       return res.status(400).json({ message: "All fields are required" });
     }
+    
+    email = email.toLowerCase().trim();
 
     if (!validatePassword(password)) {
       return res.status(400).json({ message: "Password does not meet the security requirements." });
@@ -100,14 +102,22 @@ router.post("/signup", async (req, res) => {
       isVerified: false,
     });
 
-    await sendOtpEmail(email, otp);
+    const isSent = await sendOtpEmail(email, otp);
 
     console.log("OTP SENT:", otp); // dev only
 
-    res.status(201).json({
-      message: "Signup successful. OTP sent to email.",
-      userId: user._id,
-    });
+    if (isSent) {
+      res.status(201).json({
+        message: "Signup successful. OTP sent to email.",
+        userId: user._id,
+      });
+    } else {
+      res.status(201).json({
+        message: "Signup successful. OTP generated. (Email delivery failed, check backend console logs for OTP)",
+        userId: user._id,
+        emailFailed: true
+      });
+    }
 
   } catch (err) {
     console.error("Signup error:", err);
@@ -185,14 +195,95 @@ router.post("/resend-otp", async (req, res) => {
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    await sendOtpEmail(user.email, newOtp);
+    const isSent = await sendOtpEmail(user.email, newOtp);
 
     console.log("OTP RESENT:", newOtp); // dev only
 
-    res.json({ message: "New OTP sent to your email" });
+    if (isSent) {
+      res.json({ message: "New OTP sent to your email" });
+    } else {
+      res.json({ 
+        message: "New OTP generated. (Email delivery failed, check backend console logs for OTP)",
+        emailFailed: true
+      });
+    }
 
   } catch (err) {
     console.error("Resend OTP error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* =========================
+   FORGOT PASSWORD
+========================= */
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required" });
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) return res.status(404).json({ message: "No account found with that email address" });
+
+    // Generate new OTP
+    const otp = crypto.randomInt(100000, 999999).toString();
+    user.otp = otp;
+    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    await user.save();
+
+    const isSent = await sendOtpEmail(user.email, otp);
+    console.log("PASSWORD RESET OTP SENT:", otp); // dev only
+
+    if (isSent) {
+      res.json({ message: "Password reset OTP sent to your email", userId: user._id });
+    } else {
+      res.json({ 
+        message: "Password reset OTP generated. (Email delivery failed, check backend console logs for OTP)", 
+        userId: user._id,
+        emailFailed: true 
+      });
+    }
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* =========================
+   RESET PASSWORD
+========================= */
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { userId, otp, newPassword } = req.body;
+
+    if (!userId || !otp || !newPassword) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (!validatePassword(newPassword)) {
+      return res.status(400).json({ message: "Password does not meet the security requirements." });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!user.otp || user.otp !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    if (new Date() > new Date(user.otpExpires)) {
+      return res.status(400).json({ message: "OTP has expired" });
+    }
+
+    // Update password
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.json({ message: "Password has been successfully reset" });
+  } catch (err) {
+    console.error("Reset password error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -202,7 +293,13 @@ router.post("/resend-otp", async (req, res) => {
 ========================= */
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+    
+    email = email.toLowerCase().trim();
 
     // First, check if it's a regular user
     let user = await User.findOne({ email });
@@ -300,10 +397,16 @@ router.post("/google-login", async (req, res) => {
 
     // Fetch user info from Google using the access token
     const googleUserRes = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${googleToken}`);
-    const { email, name, picture, sub: googleId } = googleUserRes.data;
+    const { email: rawEmail, name, picture, sub: googleId } = googleUserRes.data;
+    
+    if (!rawEmail) {
+      return res.status(400).json({ message: "Google account does not have an email associated with it." });
+    }
+    
+    const email = rawEmail.toLowerCase().trim();
 
-    // Check if user already exists
-    let user = await User.findOne({ email });
+    // Check if user already exists (case-insensitive for legacy mixed-case emails)
+    let user = await User.findOne({ email: new RegExp('^' + email + '$', 'i') });
 
     if (!user) {
       // Create new user for first-time Google sign-in
@@ -311,6 +414,7 @@ router.post("/google-login", async (req, res) => {
         name: name,
         email: email,
         password: await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10), // Random password for social logins
+        provider: "google",
         address: "Address not provided (Google Login)",
         profileImage: picture,
         isVerified: true, // Google accounts are pre-verified
@@ -318,11 +422,26 @@ router.post("/google-login", async (req, res) => {
       });
       console.log("New user created via Google Login:", user._id);
     } else {
-      // Update existing user with Google ID if not present
+      // Update existing user with Google ID and provider if not present
+      let needsSave = false;
       if (!user.googleId) {
         user.googleId = googleId;
-        if (!user.profileImage) user.profileImage = picture;
+        needsSave = true;
+      }
+      if (!user.profileImage) {
+        user.profileImage = picture;
+        needsSave = true;
+      }
+      if (user.provider !== "google" && user.provider !== "local_and_google") {
+        user.provider = "local_and_google"; // Mark as linked
+        needsSave = true;
+      }
+      if (!user.isVerified) {
         user.isVerified = true;
+        needsSave = true;
+      }
+      
+      if (needsSave) {
         await user.save();
       }
       console.log("Existing user logged in via Google:", user._id);
@@ -589,5 +708,3 @@ router.put("/:userId/change-password", verifyToken, async (req, res) => {
 });
 
 export default router;
-
-

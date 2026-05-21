@@ -492,22 +492,31 @@ const ProfessionalRegistration = () => {
     }
   }
 
-  const serviceCategories = [
-    { value: "", label: "Select category", disabled: true },
-    { value: "plumbing", label: "🔧 Plumbing" },
-    { value: "electrical", label: "⚡ Electrical" },
-    { value: "carpentry", label: "🪵 Carpentry" },
-    { value: "cleaning", label: "🧹 Cleaning" },
-    { value: "painting", label: "🎨 Painting" },
-    { value: "gardening", label: "🌿 Gardening" },
-    { value: "mechanic", label: "🔩 Mechanic" },
-    { value: "tutoring", label: "📚 Tutoring" },
-    { value: "freelancer", label: "💻 Freelancer" },
-    { value: "graphic_designer", label: "🎨 Graphic Designer" },
-    { value: "logo_designer", label: "✨ Logo Designer" },
-    { value: "developer", label: "⌨️ Developer" },
-    { value: "waiter", label: "🤵 Waiter" },
-  ]
+  const [serviceCategories, setServiceCategories] = useState([
+    { value: "", label: "Select category", disabled: true }
+  ]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get('/api/categories');
+        if (res.data && res.data.success) {
+          const dbCategories = res.data.data.map(cat => ({
+            value: cat.value,
+            label: cat.label
+          }));
+          
+          setServiceCategories([
+            { value: "", label: "Select category", disabled: true },
+            ...dbCategories
+          ]);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
 
   if (isLoadingStatus) {

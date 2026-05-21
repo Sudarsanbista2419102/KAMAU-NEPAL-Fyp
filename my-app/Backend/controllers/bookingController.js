@@ -237,8 +237,9 @@ export const updateBookingStatus = async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    // Synchronize completedJobs count in Professional model
+    // Synchronize completedJobs count and liveStatus in Professional model
     if (booking.professionalId && status !== previousStatus) {
+      // 1. Update completedJobs count
       if (status === "Completed") {
         await Professional.findByIdAndUpdate(booking.professionalId, { 
           $inc: { completedJobs: 1 } 
@@ -249,6 +250,28 @@ export const updateBookingStatus = async (req, res) => {
           $inc: { completedJobs: -1 } 
         });
         console.log(`Decremented completedJobs for professional ${booking.professionalId}`);
+      }
+
+      // 2. Update liveStatus (Ongoing if has confirmed or in progress jobs, otherwise Free)
+      if (status === "Confirmed" || status === "In Progress") {
+        await Professional.findByIdAndUpdate(booking.professionalId, {
+          liveStatus: "Ongoing"
+        });
+        console.log(`Set liveStatus to Ongoing for professional ${booking.professionalId}`);
+      } else if (["Completed", "Cancelled", "Rejected"].includes(status)) {
+        // Check if professional has any other ongoing or confirmed bookings
+        const otherActiveBooking = await Booking.findOne({
+          professionalId: booking.professionalId,
+          _id: { $ne: booking._id },
+          status: { $in: ["Confirmed", "In Progress"] }
+        });
+
+        if (!otherActiveBooking) {
+          await Professional.findByIdAndUpdate(booking.professionalId, {
+            liveStatus: "Free"
+          });
+          console.log(`Set liveStatus to Free for professional ${booking.professionalId}`);
+        }
       }
     }
 

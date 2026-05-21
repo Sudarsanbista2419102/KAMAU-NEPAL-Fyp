@@ -44,7 +44,6 @@ const professionalSchema = new mongoose.Schema({
   serviceCategory: {
     type: String,
     required: true,
-    enum: ['plumbing', 'electrical', 'carpentry', 'cleaning', 'painting', 'gardening', 'mechanic', 'tutoring', 'freelancer', 'graphic_designer', 'logo_designer', 'developer', 'waiter'],
   },
   tools: {
     type: [String],

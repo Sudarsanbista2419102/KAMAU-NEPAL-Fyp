@@ -32,7 +32,6 @@ router.get("/professional/:professionalId", getProfessionalBookings);
 
 // Check if user has confirmed/completed booking with professional
 router.get("/user/:userId/professional/:professionalId", checkUserBookingStatus);
-
 // Get a single booking by ID
 router.get("/:id", getBookingById);
 
@@ -41,7 +40,6 @@ router.patch("/:id", updateBookingStatus);
 
 // Update payment status
 router.patch("/:id/payment", updatePaymentStatus);
-
 // Delete a booking
 router.delete("/:id", deleteBooking);
 

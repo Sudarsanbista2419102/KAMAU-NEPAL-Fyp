@@ -26,7 +26,6 @@ export const createReview = async (req, res) => {
                 message: "You can only review a professional after their service is approved or completed." 
             });
         }
-
         // Check if review already exists
         const existingReview = await Review.findOne({ professionalId, userId });
         if (existingReview) {
