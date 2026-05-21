@@ -24,16 +24,17 @@ const ForgotPassword = () => {
     try {
       setLoading(true);
       const response = await axios.post('/api/users/forgot-password', { email });
-      
-      // Save userId for the reset password step
-      if (response.data.userId) {
-        sessionStorage.setItem('resetUserId', response.data.userId);
-      }
-      
-      setIsSubmitted(true);
-      toast.success(response.data.message || 'Reset link sent!');
-      
-      setTimeout(() => navigate('/reset-password'), 2000);
+            // Save userId for the reset password step
+        if (response.data.userId) {
+          sessionStorage.setItem('resetUserId', response.data.userId);
+        }
+        // If email failed to send, inform user to check console for OTP
+        if (response.data.emailFailed) {
+          toast.error('Email delivery failed. Check console for OTP (development fallback).');
+        }
+        setIsSubmitted(true);
+        toast.success(response.data.message || 'Reset link sent!');
+        setTimeout(() => navigate('/reset-password'), 2000);
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Failed to send reset link. Please try again.';
       toast.error(errorMessage);

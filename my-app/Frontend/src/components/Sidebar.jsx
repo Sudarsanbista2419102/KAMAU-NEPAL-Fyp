@@ -14,6 +14,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, handleLogout }) => {
     const [professionalProfile, setProfessionalProfile] = React.useState(null);
     const [checkingProfessional, setCheckingProfessional] = React.useState(true);
     const [unreadCount, setUnreadCount] = React.useState(0);
+    const [pendingRequestsCount, setPendingRequestsCount] = React.useState(0);
 
     // Check if user is a professional
     React.useEffect(() => {
@@ -33,6 +34,19 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, handleLogout }) => {
                 const data = await response.json();
                 if (data.success) {
                     setProfessionalProfile(data.data);
+
+                    // Fetch pending requests count
+                    try {
+                        const statsResponse = await fetch(`/api/bookings/professional/${data.data._id}/stats`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const statsData = await statsResponse.json();
+                        if (statsData.success && statsData.data) {
+                            setPendingRequestsCount(statsData.data.pendingRequests || 0);
+                        }
+                    } catch (err) {
+                        console.error("Error fetching professional stats:", err);
+                    }
                 }
             } catch (err) {
                 console.error("Error checking professional status:", err);
@@ -156,10 +170,13 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen, handleLogout }) => {
                                     navigate('/professional-dashboard');
                                     setSidebarOpen(false);
                                 }}
-                                className="w-full flex items-center gap-3 px-4 py-3 text-orange-600 bg-orange-50 rounded-xl transition font-bold shadow-sm"
+                                className="relative w-full flex items-center gap-3 px-4 py-3 text-orange-600 bg-orange-50 rounded-xl transition font-bold shadow-sm"
                             >
                                 <Briefcase size={20} />
                                 <span className="text-sm">{t('pro_role')}</span>
+                                {pendingRequestsCount > 0 && (
+                                    <span className="absolute top-3 right-4 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse ring-4 ring-red-500/20" title={`${pendingRequestsCount} Pending Requests`}></span>
+                                )}
                             </button>
                         ) : professionalProfile && professionalProfile.verificationStatus === 'pending' ? (
                             <button

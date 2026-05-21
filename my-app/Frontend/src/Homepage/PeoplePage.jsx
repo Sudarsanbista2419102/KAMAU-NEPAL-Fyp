@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Star, MapPin, CheckCircle2, SlidersHorizontal, Loader, UserCircle } from 'lucide-react';
 import axios from 'axios';
 import Logo from '../Logo';
@@ -10,6 +10,7 @@ import BackButton from '../components/BackButton';
 
 const PeoplePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const searchInputRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [professionals, setProfessionals] = useState([]);
@@ -38,7 +39,7 @@ const PeoplePage = () => {
   
   // Filter state
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(location.state?.selectedCategory || location.state?.searchQuery || '');
   const [selectedArea, setSelectedArea] = useState('');
   const [availableCategories, setAvailableCategories] = useState([]);
   const [availableAreas, setAvailableAreas] = useState([]);

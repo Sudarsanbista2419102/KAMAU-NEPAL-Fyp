@@ -67,6 +67,28 @@ const ProfessionalProfile = () => {
   const [requestTime, setRequestTime] = useState('');
   const [requestLocation, setRequestLocation] = useState('');
 
+  // Reverse Geocode map pin to update Location field automatically
+  useEffect(() => {
+    const fetchAddress = async () => {
+      // Don't auto-fetch for the exact default coordinates unless requested
+      if (pinLocation.lat === 27.7172 && pinLocation.lng === 85.3240 && !requestLocation) {
+        return;
+      }
+      try {
+        const res = await axios.get(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pinLocation.lat}&lon=${pinLocation.lng}`);
+        if (res.data && res.data.display_name) {
+          setRequestLocation(res.data.display_name);
+        }
+      } catch (err) {
+        console.error("Failed to reverse geocode:", err);
+      }
+    };
+    
+    if (pinLocation && pinLocation.lat) {
+      fetchAddress();
+    }
+  }, [pinLocation.lat, pinLocation.lng]);
+
   // Review States
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);

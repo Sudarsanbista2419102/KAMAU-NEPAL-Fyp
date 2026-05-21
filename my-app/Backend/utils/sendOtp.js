@@ -42,11 +42,7 @@ export const sendOtpEmail = async (email, otp) => {
     console.error(`❌ Failed to send OTP email to ${email}:`, err.message);
     console.log(`🔑 [DEV-FALLBACK] OTP for ${email} is: ${otp}`);
     
-    // If in production, rethrow the error so that the API request fails strictly.
-    // If in development (local), return false instead of throwing so testing isn't blocked.
-    if (process.env.NODE_ENV === "production") {
-      throw err;
-    }
+    // Return false on any failure, avoiding thrown errors that cause 500 responses
     return false;
   }
 };

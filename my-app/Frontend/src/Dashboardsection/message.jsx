@@ -491,18 +491,6 @@ export default function MessagePage() {
                                 </div>
                                 <div className="flex items-center gap-2 relative">
                                     <button 
-                                        onClick={() => handleCall('voice')}
-                                        className="p-2.5 text-gray-400 hover:bg-gray-100 rounded-xl transition-colors hidden sm:block"
-                                    >
-                                        <Phone size={20} />
-                                    </button>
-                                    <button 
-                                        onClick={() => handleCall('video')}
-                                        className="p-2.5 text-gray-400 hover:bg-gray-100 rounded-xl transition-colors hidden sm:block"
-                                    >
-                                        <Video size={20} />
-                                    </button>
-                                    <button 
                                         onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
                                         className="p-2.5 text-gray-400 hover:bg-gray-100 rounded-xl transition-colors"
                                     >

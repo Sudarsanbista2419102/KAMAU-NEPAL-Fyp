@@ -85,7 +85,7 @@ const ServicesPage = () => {
   }, []);
 
   const handleCategoryClick = (catId) => {
-    navigate('/explore-jobs', { state: { searchQuery: catId } });
+    navigate('/people', { state: { selectedCategory: catId } });
   };
 
   return (

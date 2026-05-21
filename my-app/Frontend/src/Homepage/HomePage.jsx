@@ -145,19 +145,27 @@ const HomePage = () => {
     const fetchCategories = async () => {
       try {
         setLoadingCategories(true);
-        const response = await axios.get('/api/categories');
-        if (response.data.success) {
-          const dynamicCategories = response.data.data.map(cat => {
-            const imgSrc = cat.image 
-              ? (cat.image.startsWith('http') ? cat.image : `/${cat.image.replace(/\\/g, '/')}`)
-              : null;
-            return {
-              name: cat.label,
-              icon: imgSrc || '💼',
-              iconType: imgSrc ? 'image' : 'emoji',
-              id: cat.value
-            };
-          });
+        const [categoriesRes, activeCategoriesRes] = await Promise.all([
+          axios.get('/api/categories'),
+          axios.get('/api/professionals/categories')
+        ]);
+
+        if (categoriesRes.data.success && activeCategoriesRes.data.success) {
+          const activeCategoryValues = activeCategoriesRes.data.data;
+          
+          const dynamicCategories = categoriesRes.data.data
+            .filter(cat => activeCategoryValues.includes(cat.value))
+            .map(cat => {
+              const imgSrc = cat.image 
+                ? (cat.image.startsWith('http') ? cat.image : `/${cat.image.replace(/\\/g, '/')}`)
+                : null;
+              return {
+                name: cat.label,
+                icon: imgSrc || '💼',
+                iconType: imgSrc ? 'image' : 'emoji',
+                id: cat.value
+              };
+            });
 
           setCategories(dynamicCategories);
         }
@@ -362,10 +370,10 @@ const HomePage = () => {
                   <div key={i} className="animate-pulse bg-slate-100 h-32 rounded-3xl" />
                 ))
               ) : categories.length > 0 ? (
-                categories.map((category) => (
+                categories.slice(0, 5).map((category) => (
                   <button 
                     key={category.id} 
-                    onClick={() => navigate('/explore-jobs', { state: { searchQuery: category.id } })}
+                    onClick={() => navigate('/people', { state: { selectedCategory: category.id } })}
                     className="group flex flex-col items-center p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:bg-white hover:border-teal-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden"
                   >
                     <div className="w-20 h-20 mb-4 group-hover:scale-110 transition-transform duration-300 flex items-center justify-center">
@@ -388,6 +396,17 @@ const HomePage = () => {
                 <div className="col-span-full py-8 text-slate-400 font-medium">No active categories found</div>
               )}
             </div>
+            {!loadingCategories && categories.length > 5 && (
+              <div className="mt-10 text-center">
+                <Button 
+                  variant="outline" 
+                  className="gap-2"
+                  onClick={() => navigate('/services')}
+                >
+                  View All Services <ArrowRight size={18} />
+                </Button>
+              </div>
+            )}
           </div>
         </section>
 
