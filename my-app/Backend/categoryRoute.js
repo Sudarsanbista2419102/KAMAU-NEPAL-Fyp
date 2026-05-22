@@ -52,6 +52,30 @@ router.post('/', upload.single('image'), async (req, res) => {
   }
 });
 
+// PUT (edit) a category - admin protected
+router.put('/:id', upload.single('image'), async (req, res) => {
+  try {
+    const { value, label } = req.body;
+    const updates = {};
+    if (value) updates.value = value;
+    if (label) updates.label = label;
+    if (req.file) updates.image = req.file.path;
+    // Find and update the category
+    const updatedCategory = await CategoryModel.findByIdAndUpdate(
+      req.params.id,
+      { $set: updates },
+      { new: true }
+    );
+    if (!updatedCategory) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+    res.status(200).json({ success: true, message: 'Category updated successfully', data: updatedCategory });
+  } catch (error) {
+    console.error('Error updating category:', error);
+    res.status(500).json({ success: false, message: 'Failed to update category' });
+  }
+});
+
 // DELETE a category
 router.delete('/:id', async (req, res) => {
   try {

@@ -64,6 +64,11 @@ const AdminDashboard = () => {
   const [newCategoryLabel, setNewCategoryLabel] = useState('');
   const [newCategoryValue, setNewCategoryValue] = useState('');
   const [newCategoryImage, setNewCategoryImage] = useState(null);
+  // Edit category state
+  const [editCategoryId, setEditCategoryId] = useState(null);
+  const [editCategoryValue, setEditCategoryValue] = useState('');
+  const [editCategoryLabel, setEditCategoryLabel] = useState('');
+  const [editCategoryImage, setEditCategoryImage] = useState(null);
   const [statusData, setStatusData] = useState([]);
   const [liveStatusData, setLiveStatusData] = useState([]);
   const [reports, setReports] = useState([]);
@@ -1530,6 +1535,19 @@ const AdminDashboard = () => {
                                         <p className={`font-bold text-sm ${imgSrc ? 'text-white' : 'text-slate-900'}`}>{cat.label}</p>
                                         <p className={`text-[9px] font-mono font-semibold mt-0.5 ${imgSrc ? 'text-white/70' : 'text-slate-400'}`}>{cat.value}</p>
                                       </div>
+                                      <div className="flex gap-1">
+                                      <button
+                                        onClick={() => {
+                                          setEditCategoryId(cat._id);
+                                          setEditCategoryValue(cat.value);
+                                          setEditCategoryLabel(cat.label);
+                                          setEditCategoryImage(null);
+                                        }}
+                                        className="p-1.5 bg-teal-500/90 hover:bg-teal-600 text-white rounded-lg transition-all opacity-0 group-hover:opacity-100 shadow-md"
+                                        title="Edit Category"
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                      </button>
                                       <button
                                         onClick={() => handleDeleteCategory(cat._id)}
                                         className="p-1.5 bg-rose-500/90 hover:bg-rose-600 text-white rounded-lg transition-all opacity-0 group-hover:opacity-100 shadow-md"
@@ -1537,6 +1555,7 @@ const AdminDashboard = () => {
                                       >
                                         <Trash2 size={13} />
                                       </button>
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -1548,6 +1567,64 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                 </section>
+                
+                {/* Edit Category Form (modal) */}
+                {editCategoryId && (
+                  <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/30">
+                    <div className="bg-white p-6 rounded-xl shadow-lg max-w-md w-full">
+                      <h3 className="text-lg font-bold mb-4">Edit Category</h3>
+                      <div className="space-y-4">
+                        <input
+                          type="text"
+                          placeholder="Category Value"
+                          value={editCategoryValue}
+                          onChange={e => setEditCategoryValue(e.target.value)}
+                          className="w-full border rounded p-2"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Category Label"
+                          value={editCategoryLabel}
+                          onChange={e => setEditCategoryLabel(e.target.value)}
+                          className="w-full border rounded p-2"
+                        />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={e => setEditCategoryImage(e.target.files[0])}
+                          className="w-full"
+                        />
+                      </div>
+                      <div className="flex justify-end space-x-2 mt-4">
+                        <button
+                          onClick={async () => {
+                            const formData = new FormData();
+                            if (editCategoryValue) formData.append('value', editCategoryValue);
+                            if (editCategoryLabel) formData.append('label', editCategoryLabel);
+                            if (editCategoryImage) formData.append('image', editCategoryImage);
+                            try {
+                              await adminService.editCategory(editCategoryId, editCategoryValue, editCategoryLabel, editCategoryImage);
+                              setEditCategoryId(null);
+                              fetchDashboardData();
+                            } catch (e) {
+                              console.error("Edit category error:", e);
+                              alert(`Failed to edit category: ${e.message || e}`);
+                            }
+                          }}
+                          className="px-4 py-2 bg-teal-600 text-white rounded"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditCategoryId(null)}
+                          className="px-4 py-2 bg-gray-200 rounded"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -2032,118 +2109,6 @@ const AdminDashboard = () => {
                   </button>
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'categories' && (
-        <div className="space-y-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto p-6 lg:p-8">
-          <div className="bg-white p-6 lg:p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
-            <h2 className="text-2xl font-bold tracking-tight mb-1 text-slate-900">Manage Professional Categories</h2>
-            <p className="text-slate-500 font-medium uppercase tracking-wider text-[9px] mb-6">Add or view service categories</p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-100 items-end">
-              <div className="flex-1 space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Category Value (Unique ID)</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. plumber" 
-                  value={newCategoryValue} 
-                  onChange={e => setNewCategoryValue(e.target.value.toLowerCase().replace(/\s+/g, '_'))} 
-                  className="w-full border-none ring-1 ring-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none" 
-                />
-              </div>
-              <div className="flex-1 space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Display Label (With Emoji)</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. 🔧 Plumber" 
-                  value={newCategoryLabel} 
-                  onChange={e => setNewCategoryLabel(e.target.value)} 
-                  className="w-full border-none ring-1 ring-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-teal-500 outline-none" 
-                />
-              </div>
-              <div className="flex-1 space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cover Image (Optional)</label>
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={e => setNewCategoryImage(e.target.files[0])} 
-                  className="w-full border-none ring-1 ring-slate-200 rounded-xl p-2 text-sm bg-white cursor-pointer" 
-                />
-              </div>
-              <div>
-                <button 
-                  onClick={async () => {
-                    if (!newCategoryValue || !newCategoryLabel) return alert('Fill both value and label fields');
-                    try {
-                      const formData = new FormData();
-                      formData.append('value', newCategoryValue);
-                      formData.append('label', newCategoryLabel);
-                      if (newCategoryImage) {
-                        formData.append('image', newCategoryImage);
-                      }
-
-                      const res = await fetch('/api/categories', {
-                        method: 'POST',
-                        body: formData
-                      });
-                      const data = await res.json();
-                      if (data.success) {
-                        setNewCategoryValue('');
-                        setNewCategoryLabel('');
-                        setNewCategoryImage(null);
-                        // Clear the file input visually
-                        const fileInput = document.querySelector('input[type="file"]');
-                        if (fileInput) fileInput.value = '';
-                        fetchDashboardData();
-                      } else {
-                        alert(data.message || 'Error adding category');
-                      }
-                    } catch(e) { alert('Error adding category: ' + e.message); console.error(e); }
-                  }} 
-                  className="w-full sm:w-auto bg-teal-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-teal-700 transition-colors shadow-lg shadow-teal-200 flex items-center justify-center gap-2 h-11"
-                >
-                  <Plus size={16} /> Add Category
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider">Existing Categories</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {systemCategories.length === 0 ? (
-                  <p className="text-slate-500 text-sm">No dynamic categories added yet.</p>
-                ) : (
-                  systemCategories.map(cat => (
-                    <div key={cat._id} className="bg-white border border-slate-200 p-4 rounded-2xl flex justify-between items-center hover:border-teal-300 transition-colors shadow-sm gap-4">
-                      <div className="flex items-center gap-4 overflow-hidden">
-                        {cat.image ? (
-                           <img src={`/${cat.image.replace(/\\/g, '/')}`} alt={cat.label} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
-                        ) : (
-                           <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 text-slate-400 font-bold text-[10px]">NO IMG</div>
-                        )}
-                        <div className="overflow-hidden">
-                          <p className="font-bold text-slate-900 truncate">{cat.label}</p>
-                          <p className="text-xs text-slate-400 font-mono mt-1 truncate">{cat.value}</p>
-                        </div>
-                      </div>
-                      <button 
-                        onClick={async () => {
-                          if(window.confirm('Delete this category?')) {
-                            await fetch(`/api/categories/${cat._id}`, { method: 'DELETE' });
-                            fetchDashboardData();
-                          }
-                        }}
-                        className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex-shrink-0"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
             </div>
           </div>
         </div>

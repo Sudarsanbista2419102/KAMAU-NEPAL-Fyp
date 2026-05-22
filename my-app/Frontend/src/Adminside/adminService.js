@@ -4,7 +4,7 @@ const API_URL = "/api/admin";
 
 // Create axios instance
 const axiosInstance = axios.create({
-  baseURL: API_URL
+  baseURL: API_URL,
 });
 
 // Add token to requests
@@ -31,7 +31,7 @@ export const getDashboardStats = async () => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to fetch dashboard stats"
+      message: "Failed to fetch dashboard stats",
     };
   }
 };
@@ -47,7 +47,7 @@ export const getAnalyticsData = async () => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to fetch analytics"
+      message: "Failed to fetch analytics",
     };
   }
 };
@@ -64,7 +64,7 @@ export const getRecentApplications = async (params = {}) => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to fetch recent applications"
+      message: "Failed to fetch recent applications",
     };
   }
 };
@@ -81,7 +81,7 @@ export const getAllProfessionalsForAdmin = async (params = {}) => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to fetch professionals"
+      message: "Failed to fetch professionals",
     };
   }
 };
@@ -98,7 +98,7 @@ export const searchProfessionals = async (params = {}) => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Search failed"
+      message: "Search failed",
     };
   }
 };
@@ -115,7 +115,7 @@ export const getPendingApplications = async (params = {}) => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to fetch pending applications"
+      message: "Failed to fetch pending applications",
     };
   }
 };
@@ -132,11 +132,10 @@ export const getApplicationDetails = async (id) => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to fetch application details"
+      message: "Failed to fetch application details",
     };
   }
 };
-
 
 /**
  * Approve professional application
@@ -150,7 +149,7 @@ export const approveProfessional = async (id) => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to approve professional"
+      message: "Failed to approve professional",
     };
   }
 };
@@ -164,13 +163,13 @@ export const approveProfessional = async (id) => {
 export const rejectProfessional = async (id, rejectionReason) => {
   try {
     const response = await axiosInstance.patch(`/applications/${id}/reject`, {
-      rejectionReason
+      rejectionReason,
     });
     return response.data;
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to reject professional"
+      message: "Failed to reject professional",
     };
   }
 };
@@ -186,7 +185,57 @@ export const getCategoryDistribution = async () => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to fetch category distribution"
+      message: "Failed to fetch category distribution",
+    };
+  }
+};
+
+/**
+ * Create a new category (supports optional image)
+ */
+export const createCategory = async (value, label, imageFile) => {
+  try {
+    const formData = new FormData();
+    formData.append('value', value);
+    formData.append('label', label);
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+    const response = await axios.post('/api/categories', formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || {
+      success: false,
+      message: 'Failed to create category',
+    };
+  }
+};
+
+/**
+ * Edit an existing category (supports optional image)
+ */
+export const editCategory = async (id, value, label, imageFile) => {
+  try {
+    const formData = new FormData();
+    if (value) formData.append('value', value);
+    if (label) formData.append('label', label);
+    if (imageFile) formData.append('image', imageFile);
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+    const response = await axios.put(`/api/categories/${id}`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || {
+      success: false,
+      message: 'Failed to edit category',
     };
   }
 };
@@ -202,7 +251,7 @@ export const getStatusDistribution = async () => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to fetch status distribution"
+      message: "Failed to fetch status distribution",
     };
   }
 };
@@ -218,7 +267,7 @@ export const getRevenueAnalytics = async () => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to fetch revenue analytics"
+      message: "Failed to fetch revenue analytics",
     };
   }
 };
@@ -235,13 +284,10 @@ export const exportData = async (params = {}) => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to export data"
+      message: "Failed to export data",
     };
   }
 };
-
-// Alias for easier access
-export const getAllProfessionals = getAllProfessionalsForAdmin;
 
 /**
  * Broadcast a notification to users/professionals/all
@@ -255,7 +301,7 @@ export const broadcastNotification = async (payload) => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to broadcast notification"
+      message: "Failed to broadcast notification",
     };
   }
 };
@@ -272,7 +318,7 @@ export const getAllUsers = async (params = {}) => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to fetch users"
+      message: "Failed to fetch users",
     };
   }
 };
@@ -289,7 +335,7 @@ export const deleteUser = async (id) => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to delete user"
+      message: "Failed to delete user",
     };
   }
 };
@@ -307,7 +353,7 @@ export const blockProfessional = async (id, days = 3) => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to block professional"
+      message: "Failed to block professional",
     };
   }
 };
@@ -324,7 +370,7 @@ export const deleteProfessional = async (id) => {
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to delete professional"
+      message: "Failed to delete professional",
     };
   }
 };
@@ -337,14 +383,14 @@ export const getReports = async () => {
   try {
     const response = await axios.get('/api/reports/all', {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`
-      }
+        Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`,
+      },
     });
     return { success: true, data: response.data };
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to fetch reports"
+      message: "Failed to fetch reports",
     };
   }
 };
@@ -359,17 +405,20 @@ export const updateReportStatus = async (id, data) => {
   try {
     const response = await axios.patch(`/api/reports/${id}/status`, data, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`
-      }
+        Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`,
+      },
     });
     return { success: true, data: response.data };
   } catch (error) {
     throw error.response?.data || {
       success: false,
-      message: "Failed to update report status"
+      message: "Failed to update report status",
     };
   }
 };
+
+// Alias for easier access
+export const getAllProfessionals = getAllProfessionalsForAdmin;
 
 const adminServiceData = {
   getDashboardStats,
@@ -383,16 +432,18 @@ const adminServiceData = {
   approveProfessional,
   rejectProfessional,
   getCategoryDistribution,
+  createCategory,
+  editCategory,
   getStatusDistribution,
+  getRevenueAnalytics,
   exportData,
   broadcastNotification,
   getAllUsers,
   deleteUser,
+  blockProfessional,
   deleteProfessional,
   getReports,
   updateReportStatus,
-  getRevenueAnalytics,
-  blockProfessional,
 };
 
 export default adminServiceData;
