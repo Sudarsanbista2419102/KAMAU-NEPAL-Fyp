@@ -342,22 +342,6 @@ export const deleteUser = async (id) => {
 
 /**
  * Block a professional for a specific number of days
- * @param {String} id - Professional ID
- * @param {Number} days - Number of days to block
- * @returns {Promise} Success message and updated data
- */
-export const blockProfessional = async (id, days = 3) => {
-  try {
-    const response = await axiosInstance.patch(`/professionals/${id}/block`, { days });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || {
-      success: false,
-      message: "Failed to block professional",
-    };
-  }
-};
-
 /**
  * Delete a professional profile
  * @param {String} id - Professional MongoDB ID
@@ -417,6 +401,79 @@ export const updateReportStatus = async (id, data) => {
   }
 };
 
+/**
+ * Block a professional
+ * @param {String} id
+ * @param {Number} days
+ * @returns {Promise}
+ */
+export const blockProfessional = async (id, days) => {
+  try {
+    // Use full URL to bypass proxy issues
+    const response = await axios.patch(`http://localhost:5001/api/admin/professionals/${id}/block`, { days }, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || {
+      success: false,
+      message: "Failed to block professional",
+    };
+  }
+};
+
+export const unblockProfessional = async (id) => {
+  try {
+    // Use full URL to bypass proxy issues
+    const response = await axios.patch(`http://localhost:5001/api/admin/professionals/${id}/unblock`, {}, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || {
+      success: false,
+      message: "Failed to unblock professional",
+    };
+  }
+};
+
+/**
+ * Get admin notifications
+ * @returns {Promise} List of admin notifications
+ */
+export const getAdminNotifications = async () => {
+  try {
+    const response = await axiosInstance.get('/notifications');
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || {
+      success: false,
+      message: "Failed to fetch notifications",
+    };
+  }
+};
+
+/**
+ * Mark notification as read
+ * @param {String} id - Notification ID
+ * @returns {Promise} Success message
+ */
+export const markNotificationAsRead = async (id) => {
+  try {
+    const response = await axiosInstance.patch(`/notifications/${id}/read`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || {
+      success: false,
+      message: "Failed to mark notification as read",
+    };
+  }
+};
+
 // Alias for easier access
 export const getAllProfessionals = getAllProfessionalsForAdmin;
 
@@ -444,6 +501,8 @@ const adminServiceData = {
   deleteProfessional,
   getReports,
   updateReportStatus,
+  getAdminNotifications,
+  markNotificationAsRead,
 };
 
 export default adminServiceData;

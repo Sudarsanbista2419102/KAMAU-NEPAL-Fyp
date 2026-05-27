@@ -1,6 +1,7 @@
 import ProfessionalModel from '../models/professionalModel.js';
 import UserModel from '../models/userModel.js';
 import NotificationModel from '../models/notificationModel.js';
+import { sendCongratulationsEmail, sendRejectionEmail } from '../utils/sendOtp.js';
 import BookingModel from '../models/bookingModel.js';
 
 /**
@@ -373,10 +374,25 @@ export const approveProfessional = async (req, res) => {
       });
     }
 
+    // Send congratulations email
+    const professionalName = `${professional.firstName} ${professional.lastName}`;
+    const emailSent = await sendCongratulationsEmail(
+      professional.email,
+      professionalName,
+      professional.serviceCategory
+    );
+
+    if (emailSent) {
+      console.log(`🎉 Congratulations email sent to ${professional.email} for approved professional: ${professionalName}`);
+    } else {
+      console.log(`⚠️ Congratulations email failed for ${professional.email}, but approval was successful`);
+    }
+
     return res.status(200).json({
       success: true,
       message: 'Professional approved successfully',
-      data: professional
+      data: professional,
+      emailSent: emailSent
     });
   } catch (error) {
     console.error('Error approving professional:', error);
@@ -433,10 +449,26 @@ export const rejectProfessional = async (req, res) => {
       });
     }
 
+    // Send rejection email
+    const professionalName = `${professional.firstName} ${professional.lastName}`;
+    const emailSent = await sendRejectionEmail(
+      professional.email,
+      professionalName,
+      professional.serviceCategory,
+      rejectionReason
+    );
+
+    if (emailSent) {
+      console.log(`📧 Rejection email sent to ${professional.email} for rejected professional: ${professionalName}`);
+    } else {
+      console.log(`⚠️ Rejection email failed for ${professional.email}, but rejection was successful`);
+    }
+
     return res.status(200).json({
       success: true,
       message: 'Professional rejected successfully',
-      data: professional
+      data: professional,
+      emailSent: emailSent
     });
   } catch (error) {
     console.error('Error rejecting professional:', error);
@@ -914,5 +946,102 @@ export const blockProfessional = async (req, res) => {
       message: 'Failed to block professional',
       error: error.message
     });
+  }
+};
+
+/**
+ * Unblock a professional (restore access)
+ * @param {Object} req - Request object (params: id)
+ * @param {Object} res - Response object
+ */
+export const unblockProfessional = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const professional = await ProfessionalModel.findById(id);
+    if (!professional) {
+      return res.status(404).json({
+        success: false,
+        message: 'Professional not found'
+      });
+    }
+
+    professional.isBlocked = false;
+    professional.blockedUntil = null;
+    professional.liveStatus = 'Free'; // Restore to active status
+    await professional.save();
+
+    // Notify the professional
+    if (professional.userId) {
+      await NotificationModel.create({
+        userId: professional.userId,
+        type: 'success',
+        title: 'Account Restored',
+        description: 'Your professional account has been restored. You can now resume accepting service requests and appear in search results.',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Professional unblocked successfully',
+      data: professional
+    });
+  } catch (error) {
+    console.error('Error unblocking professional:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to unblock professional',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Check and auto-unblock professionals whose block period has expired
+ * @returns {Promise} Resolves with number of auto-unblocked professionals
+ */
+export const checkAndAutoUnblockProfessionals = async () => {
+  try {
+    const now = new Date();
+    const blockedProfessionals = await ProfessionalModel.find({
+      isBlocked: true,
+      blockedUntil: { $lt: now }
+    });
+
+    if (blockedProfessionals.length === 0) {
+      return { success: true, unblocked: 0 };
+    }
+
+    const result = await ProfessionalModel.updateMany(
+      {
+        isBlocked: true,
+        blockedUntil: { $lt: now }
+      },
+      {
+        $set: {
+          isBlocked: false,
+          blockedUntil: null,
+          liveStatus: 'Free'
+        }
+      }
+    );
+
+    // Notify unblocked professionals
+    for (const professional of blockedProfessionals) {
+      if (professional.userId) {
+        await NotificationModel.create({
+          userId: professional.userId,
+          type: 'success',
+          title: 'Account Access Restored',
+          description: 'Your professional account block period has expired. Your account has been automatically restored.',
+        });
+      }
+    }
+
+    console.log(`Auto-unblocked ${result.modifiedCount} professionals`);
+    return { success: true, unblocked: result.modifiedCount };
+  } catch (error) {
+    console.error('Error in auto-unblocking professionals:', error);
+    return { success: false, error: error.message };
   }
 };

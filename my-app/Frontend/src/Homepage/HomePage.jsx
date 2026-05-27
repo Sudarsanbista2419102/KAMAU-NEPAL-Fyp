@@ -521,7 +521,7 @@ const HomePage = () => {
           </div>
           <div className="pt-10 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center text-sm text-slate-500">
             <p>© 2025 Kamau Nepal. All rights reserved.</p>
-            <div className="flex items-center gap-1">Made with <Heart size={14} className="text-red-500 fill-red-500" /> in Kathmandu</div>
+            <div className="flex items-center gap-1">Made By<Heart size={14} className="text-red-500 fill-red-500" /> SudarsanBista</div>
           </div>
         </div>
       </footer>

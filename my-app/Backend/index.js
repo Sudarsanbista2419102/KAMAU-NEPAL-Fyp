@@ -13,6 +13,7 @@ import messageRoute from "./messageRoute.js";
 import paymentRoute from "./paymentRoute.js";
 import reportRoute from "./reportRoute.js";
 import categoryRoute from "./categoryRoute.js";
+import { checkAndAutoUnblockProfessionals } from "./controllers/adminController.js";
 import path from "path";
 
 dotenv.config();
@@ -73,7 +74,18 @@ if (!process.env.MONGO_URI) {
 
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
+  .then(() => {
+    console.log("MongoDB connected");
+    
+    // Setup periodic job to check and auto-unblock professionals (every 1 hour)
+    setInterval(async () => {
+      console.log("🔄 Checking for expired professional blocks...");
+      const result = await checkAndAutoUnblockProfessionals();
+      if (result.success && result.unblocked > 0) {
+        console.log(`✅ Auto-unblocked ${result.unblocked} professional(s)`);
+      }
+    }, 60 * 60 * 1000); // Run every 1 hour
+  })
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err);
     process.exit(1);

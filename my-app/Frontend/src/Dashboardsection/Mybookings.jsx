@@ -256,7 +256,7 @@ export default function MyBookings() {
         if (reporterId && booking.userId) {
             try {
                 const response = await axios.get(
-                    `/api/reports/check/${reporterId}/${booking.userId}?reporterModel=Professional&targetModel=User`
+                    `/api/reports/check/${reporterId}/${booking.professionalId?._id || booking.professionalId}?reporterModel=User&targetModel=Professional`
                 );
                 if (response.data.success && response.data.hasReported) {
                     // Add to local state if not already there
@@ -284,16 +284,16 @@ export default function MyBookings() {
         try {
             const reporterId = localStorage.getItem('userId');
             if (!reporterId) {
-                toast.error('Please login to report a customer.');
+                toast.error('Please login to report a professional.');
                 setIsReporting(false);
                 return;
             }
 
             const response = await axios.post('/api/reports', {
                 reporter: reporterId,
-                reporterModel: 'Professional',
-                target: reviewBooking.userId,
-                targetModel: 'User',
+                reporterModel: 'User',
+                target: reviewBooking.professionalId?._id || reviewBooking.professionalId,
+                targetModel: 'Professional',
                 reason: reportReason,
                 description: reportDescription
             });

@@ -15,31 +15,6 @@ const validatePassword = (password) => {
   return password.length >= minLength && hasUppercase && hasLowercase && hasNumber && hasSpecial;
 };
 
-// SIGN UP
-export const signupUser = async (req, res) => {
-  const { name, email, phone, password } = req.body;
-  try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "User already exists" });
-
-    if (!password || !validatePassword(password)) {
-      return res.status(400).json({ message: "Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character." });
-    }
-
-    const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
-    const otp = generateOtp();
-
-    const newUser = await User.create({ name, email, phone, password: hashedPassword, otp });
-    
-    // TODO: Send OTP via SMS/Email
-    console.log("OTP sent:", otp);
-
-    res.status(201).json({ message: "User created, OTP sent", userId: newUser._id });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
 // VERIFY OTP
 export const verifyOtp = async (req, res) => {
   const { userId, otp } = req.body;

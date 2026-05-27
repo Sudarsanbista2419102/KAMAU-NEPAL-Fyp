@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Lock, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Lock, CheckCircle, AlertCircle } from 'lucide-react';
 import BackButton from '../components/BackButton';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -11,6 +11,14 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState({
+    length: false,
+    upper: false,
+    lower: false,
+    number: false,
+    special: false
+  });
+  const [strengthScore, setStrengthScore] = useState(0);
   const inputRefs = useRef([]);
   const navigate = useNavigate();
 
@@ -23,6 +31,24 @@ const ResetPassword = () => {
       navigate('/forgot-password');
     }
   }, [resetUserId, navigate]);
+
+  const checkPasswordStrength = (pass) => {
+    const length = pass.length >= 8;
+    const upper = /[A-Z]/.test(pass);
+    const lower = /[a-z]/.test(pass);
+    const number = /[0-9]/.test(pass);
+    const special = /[!@#$%^&*()_+[\]:;<>,.?~\/-]/.test(pass);
+
+    setPasswordStrength({ length, upper, lower, number, special });
+
+    let score = 0;
+    if (length) score++;
+    if (upper) score++;
+    if (lower) score++;
+    if (number) score++;
+    if (special) score++;
+    setStrengthScore(score);
+  };
 
   const handleOtpChange = (index, value) => {
     if (/^\d*$/.test(value) && value.length <= 1) {
@@ -37,6 +63,12 @@ const ResetPassword = () => {
     if (e.key === 'Backspace' && !otp[index] && index > 0) {
       inputRefs.current[index - 1].focus();
     }
+  };
+
+  const handlePasswordChange = (e) => {
+    const pass = e.target.value;
+    setNewPassword(pass);
+    checkPasswordStrength(pass);
   };
 
   const handleSubmit = async (e) => {
@@ -56,6 +88,12 @@ const ResetPassword = () => {
 
     if (!newPassword || !confirmPassword) {
       toast.error('Please enter and confirm your new password');
+      return;
+    }
+
+    // Validate password strength
+    if (strengthScore < 5) {
+      toast.error('Password does not meet security requirements. Must include uppercase, lowercase, number, and special character.');
       return;
     }
 
@@ -133,13 +171,60 @@ const ResetPassword = () => {
                   <input
                     type="password"
                     value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    onChange={handlePasswordChange}
                     placeholder="Enter new password"
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
                     disabled={loading}
                   />
-                  <p className="mt-1 text-xs text-gray-500">Must be at least 8 characters with upper, lower, number, and special character.</p>
+                  
+                  {/* Password Strength Meter */}
+                  {newPassword && (
+                    <div className="mt-3 text-xs">
+                      <div className="flex gap-1 h-1.5 mt-1 rounded-full overflow-hidden bg-gray-200">
+                        {[1, 2, 3, 4, 5].map((val) => (
+                          <div
+                            key={val}
+                            className={`flex-1 ${
+                              strengthScore >= val
+                                ? strengthScore < 3
+                                  ? 'bg-red-500'
+                                  : strengthScore < 5
+                                  ? 'bg-yellow-500'
+                                  : 'bg-green-500'
+                                : 'bg-transparent'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <p className={`mt-1 font-medium ${
+                        strengthScore < 3 ? 'text-red-500' : strengthScore < 5 ? 'text-yellow-600' : 'text-green-600'
+                      }`}>
+                        {strengthScore < 3 && 'Weak password'}
+                        {strengthScore >= 3 && strengthScore < 5 && 'Fair password'}
+                        {strengthScore === 5 && 'Strong password'}
+                      </p>
+                      {strengthScore < 5 && (
+                        <ul className="mt-2 space-y-1 text-gray-500 font-medium">
+                          <li className={`flex items-center gap-1 ${passwordStrength.length ? "text-green-600" : ""}`}>
+                            {passwordStrength.length ? "✓" : "○"} At least 8 characters
+                          </li>
+                          <li className={`flex items-center gap-1 ${passwordStrength.upper ? "text-green-600" : ""}`}>
+                            {passwordStrength.upper ? "✓" : "○"} Uppercase letter (A-Z)
+                          </li>
+                          <li className={`flex items-center gap-1 ${passwordStrength.lower ? "text-green-600" : ""}`}>
+                            {passwordStrength.lower ? "✓" : "○"} Lowercase letter (a-z)
+                          </li>
+                          <li className={`flex items-center gap-1 ${passwordStrength.number ? "text-green-600" : ""}`}>
+                            {passwordStrength.number ? "✓" : "○"} Number (0-9)
+                          </li>
+                          <li className={`flex items-center gap-1 ${passwordStrength.special ? "text-green-600" : ""}`}>
+                            {passwordStrength.special ? "✓" : "○"} Special character (!@#$%^&*)
+                          </li>
+                        </ul>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -153,11 +238,17 @@ const ResetPassword = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
                     disabled={loading}
                   />
+                  {confirmPassword && newPassword !== confirmPassword && (
+                    <div className="mt-2 flex items-center gap-2 text-red-500 text-sm">
+                      <AlertCircle size={16} />
+                      <span>Passwords do not match</span>
+                    </div>
+                  )}
                 </div>
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || strengthScore < 5 || newPassword !== confirmPassword || !newPassword}
                   className="w-full bg-gradient-to-r from-teal-600 to-teal-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
                 >
                   {loading ? 'Resetting Password...' : 'Reset Password'}

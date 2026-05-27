@@ -18,6 +18,8 @@ import {
   deleteProfessional,
   getRevenueAnalytics,
   blockProfessional,
+  unblockProfessional,
+  checkAndAutoUnblockProfessionals,
 } from './controllers/adminController.js';
 import { verifyAdminToken, checkAdminRole } from './adminAuthMiddleware.js';
 
@@ -95,5 +97,27 @@ router.delete('/professionals/:id', deleteProfessional);
 
 // PATCH /api/admin/professionals/:id/block
 router.patch('/professionals/:id/block', blockProfessional);
+
+// PATCH /api/admin/professionals/:id/unblock
+router.patch('/professionals/:id/unblock', unblockProfessional);
+
+// POST /api/admin/check-and-auto-unblock
+// Check for expired blocks and auto-unblock professionals
+router.post('/check-and-auto-unblock', async (req, res) => {
+  try {
+    const result = await checkAndAutoUnblockProfessionals();
+    return res.status(200).json({
+      success: true,
+      message: `Auto-unblocked ${result.unblocked} professional(s)`,
+      data: result
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to check and auto-unblock professionals',
+      error: error.message
+    });
+  }
+});
 
 export default router;

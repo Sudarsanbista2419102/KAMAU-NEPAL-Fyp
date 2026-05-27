@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast, { Toaster } from 'react-hot-toast';
 import {
   Users,
   Search,
@@ -28,7 +29,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  Calendar
+  Calendar,
+  Moon,
+  Sun,
+  Lightbulb
 } from 'lucide-react';
 
 import jsPDF from 'jspdf';
@@ -50,6 +54,11 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [adminUser] = useState(getStoredAdminUser());
   const [loading, setLoading] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    // Load dark mode preference from localStorage
+    const saved = localStorage.getItem('adminDarkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
   const [stats, setStats] = useState({
     totalApplications: 0,
     totalPending: 0,
@@ -90,6 +99,8 @@ const AdminDashboard = () => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewDocId, setPreviewDocId] = useState(null);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const [confirmDialog, setConfirmDialog] = useState({ 
     isOpen: false, 
     title: '', 
@@ -126,6 +137,16 @@ const AdminDashboard = () => {
     localStorage.setItem('admin_calendar_tasks', JSON.stringify(calendarTasks));
   }, [calendarTasks]);
 
+  // Dark Mode Effect
+  useEffect(() => {
+    localStorage.setItem('adminDarkMode', JSON.stringify(darkMode));
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
+
   const getLocalDateString = (d) => {
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -133,9 +154,27 @@ const AdminDashboard = () => {
     return `${yyyy}-${mm}-${dd}`;
   };
 
+  const fetchNotifications = async () => {
+    try {
+      const res = await adminService.getAdminNotifications();
+      if (res.success) {
+        setNotifications(res.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    }
+  };
+
+  const handleNotificationClick = (notificationId) => {
+    adminService.markNotificationAsRead(notificationId).catch(err => console.error(err));
+  };
+
   const handleAddCalendarTask = (e) => {
     e.preventDefault();
-    if (!newTaskTitle.trim()) return;
+    if (!newTaskTitle.trim()) {
+      toast.error('Please enter a task title');
+      return;
+    }
     
     const dateStr = getLocalDateString(selectedCalendarDate);
     const newTask = {
@@ -148,18 +187,23 @@ const AdminDashboard = () => {
     
     setCalendarTasks(prev => [...prev, newTask]);
     setNewTaskTitle('');
+    toast.success('Task added successfully!');
   };
 
   const handleToggleCalendarTask = (taskId) => {
     setCalendarTasks(prev => prev.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t));
+    toast.success('Task updated!');
   };
 
   const handleDeleteCalendarTask = (taskId) => {
     setCalendarTasks(prev => prev.filter(t => t.id !== taskId));
+    toast.success('Task deleted!');
   };
 
   useEffect(() => {
     fetchDashboardData();
+    // Load notifications when dashboard loads
+    fetchNotifications();
   }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -170,6 +214,13 @@ const AdminDashboard = () => {
       return () => clearTimeout(delaySearch);
     }
   }, [searchTerm, filterCategory, filterStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch notifications periodically
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000); // Poll every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchDashboardData = async () => {
     try {
@@ -265,7 +316,8 @@ const AdminDashboard = () => {
   };
 
   const handleDownloadPDF = async (professional) => {
-    const doc = new jsPDF();
+    try {
+      const doc = new jsPDF();
     
     // Header
     doc.setFillColor(15, 118, 110); // Kamau Teal
@@ -388,6 +440,11 @@ const AdminDashboard = () => {
     }
 
     doc.save(`${professional.firstName}_${professional.lastName}_Application.pdf`);
+    toast.success('PDF downloaded successfully!');
+    } catch (err) {
+      console.error('Failed to generate PDF:', err);
+      toast.error('Failed to download PDF');
+    }
   };
 
   const handleApprove = async (id) => {
@@ -398,9 +455,12 @@ const AdminDashboard = () => {
       onConfirm: async () => {
         try {
           const res = await adminService.approveProfessional(id);
-          if (res.success) fetchDashboardData();
+          if (res.success) {
+            toast.success('Professional approved successfully!');
+            fetchDashboardData();
+          }
         } catch (err) {
-          alert(err.message || 'Failed to approve');
+          toast.error(err.message || 'Failed to approve professional');
         }
       },
       type: 'success'
@@ -416,7 +476,7 @@ const AdminDashboard = () => {
 
   const confirmRejection = async () => {
     if (!rejectionReason.trim()) {
-      alert('Please provide a reason for rejection');
+      toast.error('Please provide a reason for rejection');
       return;
     }
     
@@ -424,11 +484,12 @@ const AdminDashboard = () => {
       setIsSubmitting(true);
       const res = await adminService.rejectProfessional(selectedProfessional._id, rejectionReason);
       if (res.success) {
+        toast.success('Professional rejected successfully!');
         setShowRejectionModal(false);
         fetchDashboardData();
       }
     } catch (err) {
-      alert(err.message || 'Failed to reject');
+      toast.error(err.message || 'Failed to reject professional');
     } finally {
       setIsSubmitting(false);
     }
@@ -465,9 +526,12 @@ const AdminDashboard = () => {
       onConfirm: async () => {
         try {
           const res = await adminService.deleteUser(id);
-          if (res.success) fetchDashboardData();
+          if (res.success) {
+            toast.success('User deleted successfully!');
+            fetchDashboardData();
+          }
         } catch (err) {
-          alert(err.message || 'Failed to delete user');
+          toast.error(err.message || 'Failed to delete user');
         }
       },
       type: 'danger'
@@ -482,12 +546,57 @@ const AdminDashboard = () => {
       onConfirm: async () => {
         try {
           const res = await adminService.deleteProfessional(id);
-          if (res.success) fetchDashboardData();
+          if (res.success) {
+            toast.success('Professional profile deleted successfully!');
+            fetchDashboardData();
+          }
         } catch (err) {
-          alert(err.message || 'Failed to delete professional');
+          toast.error(err.message || 'Failed to delete professional');
         }
       },
       type: 'danger'
+    });
+  };
+
+  const handleBlockProfessional = async (id, days = 3) => {
+    const professional = professionals.find(p => p._id === id);
+    openConfirm({
+      title: "Block Professional",
+      message: `This will suspend ${professional?.firstName} ${professional?.lastName} for ${days} days. They will not appear in search results and cannot accept new bookings. Continue?`,
+      confirmText: `Block for ${days} Days`,
+      onConfirm: async () => {
+        try {
+          const res = await adminService.blockProfessional(id, days);
+          if (res.success) {
+            toast.success(`Professional blocked for ${days} days!`);
+            fetchDashboardData();
+          }
+        } catch (err) {
+          toast.error(err.message || 'Failed to block professional');
+        }
+      },
+      type: 'warning'
+    });
+  };
+
+  const handleUnblockProfessional = async (id) => {
+    const professional = professionals.find(p => p._id === id);
+    openConfirm({
+      title: "Unblock Professional",
+      message: `This will restore ${professional?.firstName} ${professional?.lastName}'s access and make them visible in search results again. Continue?`,
+      confirmText: "Unblock Professional",
+      onConfirm: async () => {
+        try {
+          const res = await adminService.unblockProfessional(id);
+          if (res.success) {
+            toast.success('Professional unblocked successfully!');
+            fetchDashboardData();
+          }
+        } catch (err) {
+          toast.error(err.message || 'Failed to unblock professional');
+        }
+      },
+      type: 'success'
     });
   };
 
@@ -521,9 +630,83 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex overflow-hidden relative">
+    <div className={`min-h-screen font-sans flex overflow-hidden relative transition-colors ${
+      darkMode 
+        ? 'bg-slate-950 text-slate-100' 
+        : 'bg-slate-50 text-slate-900'
+    }`}>
+      <Toaster 
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 4000,
+          custom: (t) => (
+            <div
+              className={`w-full max-w-md px-6 py-4 rounded-lg shadow-lg border-l-4 flex items-start gap-4 transition-all ${
+                t.type === 'success'
+                  ? 'bg-white border-l-green-500'
+                  : t.type === 'error'
+                  ? 'bg-white border-l-red-500'
+                  : t.type === 'loading'
+                  ? 'bg-white border-l-blue-500'
+                  : 'bg-white border-l-yellow-500'
+              }`}
+            >
+              <div
+                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${
+                  t.type === 'success'
+                    ? 'bg-green-500'
+                    : t.type === 'error'
+                    ? 'bg-red-500'
+                    : t.type === 'loading'
+                    ? 'bg-blue-500'
+                    : 'bg-yellow-500'
+                }`}
+              >
+                {t.type === 'success' && '✓'}
+                {t.type === 'error' && '✕'}
+                {t.type === 'loading' && 'i'}
+                {t.type === 'blank' && '!'}
+              </div>
+              <div className="flex-1 pt-1">
+                <h3 className={`font-bold text-sm ${
+                  t.type === 'success'
+                    ? 'text-gray-800'
+                    : t.type === 'error'
+                    ? 'text-gray-800'
+                    : 'text-gray-800'
+                }`}>
+                  {t.type === 'success' && 'Success'}
+                  {t.type === 'error' && 'Error'}
+                  {t.type === 'loading' && 'Info'}
+                  {t.type === 'blank' && 'Warning'}
+                </h3>
+                <p className="text-xs text-gray-500 mt-1 leading-snug">
+                  {t.message}
+                </p>
+              </div>
+              <button
+                onClick={() => t.dismiss()}
+                className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors pt-1"
+              >
+                ✕
+              </button>
+            </div>
+          ),
+          success: {
+            duration: 4000,
+          },
+          error: {
+            duration: 4000,
+          },
+        }}
+      />
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white/80 backdrop-blur-2xl border-r border-slate-100 transform transition-all duration-500 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} shadow-xl`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 backdrop-blur-2xl border-r transform transition-all duration-500 lg:static lg:translate-x-0 shadow-xl ${
+        darkMode
+          ? 'bg-slate-900/80 border-slate-800 translate-x-0'
+          : 'bg-white/80 border-slate-100'
+      } ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="h-full flex flex-col p-6 relative">
           <div className="flex items-center justify-between mb-8 relative">
             <Logo className="h-8 w-auto" isStatic={true} />
@@ -537,7 +720,9 @@ const AdminDashboard = () => {
                 {adminUser?.username?.charAt(0).toUpperCase() || 'A'}
               </div>
               <div className="overflow-hidden">
-                <p className="font-bold text-slate-900 truncate leading-tight text-sm">{adminUser?.fullName || 'Super Admin'}</p>
+                <p className={`font-bold truncate leading-tight text-sm ${
+                  darkMode ? 'text-slate-100' : 'text-slate-900'
+                }`}>{adminUser?.fullName || 'Super Admin'}</p>
                 <p className="text-[9px] font-black uppercase tracking-widest text-teal-600 mt-0.5">Manager</p>
               </div>
             </div>
@@ -550,7 +735,15 @@ const AdminDashboard = () => {
                 <button 
                   key={item.id} 
                   onClick={() => setActiveTab(item.id)} 
-                  className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all duration-300 group relative ${activeTab === item.id ? 'bg-white shadow-md border border-slate-100 text-teal-600' : 'text-slate-500 hover:bg-white hover:shadow-sm'}`}
+                  className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all duration-300 group relative ${
+                    activeTab === item.id 
+                      ? darkMode 
+                        ? 'bg-slate-800 shadow-md border border-slate-700 text-teal-400' 
+                        : 'bg-white shadow-md border border-slate-100 text-teal-600'
+                      : darkMode
+                        ? 'text-slate-400 hover:bg-slate-800 hover:shadow-sm'
+                        : 'text-slate-500 hover:bg-white hover:shadow-sm'
+                  }`}
                 >
                   <Icon size={16} className={activeTab === item.id ? 'text-teal-500 border-teal-500' : 'group-hover:text-teal-500 transition-colors'} />
                   <span className="font-black text-[11px] uppercase tracking-wider">{item.label}</span>
@@ -560,8 +753,14 @@ const AdminDashboard = () => {
             })}
           </nav>
 
-          <div className="mt-auto pt-6 border-t border-slate-100">
-            <button onClick={handleLogout} className="w-full flex items-center gap-3 p-3 rounded-xl text-rose-500 font-black text-[9px] uppercase tracking-[0.2em] hover:bg-rose-50 transition-all duration-300 group">
+          <div className={`mt-auto pt-6 border-t ${
+            darkMode ? 'border-slate-800' : 'border-slate-100'
+          }`}>
+            <button onClick={handleLogout} className={`w-full flex items-center gap-3 p-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all duration-300 group ${
+              darkMode
+                ? 'text-rose-400 hover:bg-rose-900/20'
+                : 'text-rose-500 hover:bg-rose-50'
+            }`}>
               <Power size={15} className="group-hover:scale-110 transition-transform" />
               <span>Log Out</span>
             </button>
@@ -571,7 +770,11 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto h-screen relative">
-        <header className="sticky top-0 z-40 bg-white/60 backdrop-blur-2xl border-b border-slate-100 px-6 py-3.5 flex items-center justify-between">
+        <header className={`sticky top-0 z-40 backdrop-blur-2xl border-b px-6 py-3.5 flex items-center justify-between transition-all ${
+          darkMode 
+            ? 'bg-slate-900/60 border-slate-800' 
+            : 'bg-white/60 border-slate-100'
+        }`}>
           <div className="flex items-center gap-4 lg:hidden">
             <button onClick={() => setSidebarOpen(true)} className="p-2.5 bg-slate-50 text-slate-600 rounded-xl"><Menu size={20} /></button>
             <button 
@@ -596,16 +799,47 @@ const AdminDashboard = () => {
           </div>
 
           <div className="flex items-center gap-6">
-            <button className="relative p-2.5 text-slate-400 hover:text-teal-500 transition-colors bg-slate-50 rounded-xl flex items-center justify-center">
+            <button 
+              onClick={() => setShowNotificationModal(true)}
+              className={`relative p-2.5 transition-colors rounded-xl flex items-center justify-center ${
+              darkMode 
+                ? 'text-slate-300 hover:text-blue-400 bg-slate-800' 
+                : 'text-slate-400 hover:text-teal-500 bg-slate-50'
+            }`}
+              title="Notifications"
+            >
               <Bell size={18} />
-              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-orange-500 rounded-full border-2 border-white"></span>
+              {notifications.filter(n => !n.read).length > 0 && (
+                <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-orange-500 rounded-full animate-pulse"></span>
+              )}
             </button>
-            <div className="flex items-center gap-3 pl-6 border-l border-slate-100">
+            <button 
+              onClick={() => setDarkMode(!darkMode)}
+              className={`p-2.5 transition-all rounded-xl flex items-center justify-center ${
+                darkMode 
+                  ? 'bg-slate-800 text-yellow-400 hover:bg-slate-700' 
+                  : 'bg-slate-50 text-orange-500 hover:bg-orange-50'
+              }`}
+              title={darkMode ? "Light Mode" : "Dark Mode"}
+            >
+              {darkMode ? <Lightbulb size={18} fill="currentColor" /> : <Lightbulb size={18} />}
+            </button>
+            <div className={`flex items-center gap-3 pl-6 border-l ${
+              darkMode ? 'border-slate-700' : 'border-slate-100'
+            }`}>
               <div className="text-right hidden sm:block">
-                <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Access Level</p>
-                <p className="text-[11px] font-bold text-slate-900 uppercase tracking-tighter">System Admin</p>
+                <p className={`text-[9px] font-semibold uppercase tracking-widest mb-0.5 ${
+                  darkMode ? 'text-slate-500' : 'text-slate-400'
+                }`}>Access Level</p>
+                <p className={`text-[11px] font-bold uppercase tracking-tighter ${
+                  darkMode ? 'text-slate-100' : 'text-slate-900'
+                }`}>System Admin</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-600">
+              <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${
+                darkMode 
+                  ? 'bg-blue-900/30 border-blue-500/30 text-blue-400' 
+                  : 'bg-teal-500/10 border-teal-500/20 text-teal-600'
+              }`}>
                 <Shield size={18} />
               </div>
             </div>
@@ -731,42 +965,7 @@ const AdminDashboard = () => {
                   </section>
                 </div>
 
-                <div className="xl:col-span-1 space-y-6">
-                  <div className="bg-gradient-to-br from-teal-600 to-teal-700 p-6 rounded-3xl text-white shadow-2xl shadow-teal-100 group relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 -mr-12 -mt-12 rounded-full blur-2xl group-hover:scale-125 transition-transform"></div>
-                    <div className="relative">
-                      <Zap className="w-8 h-8 mb-4 text-orange-400" />
-                      <h4 className="text-lg font-bold mb-1.5">Instant Messaging</h4>
-                      <p className="text-teal-50/80 text-xs font-medium leading-relaxed mb-6">Send broadcast notifications to all registered professionals and clients in seconds.</p>
-                      <button 
-                        onClick={() => setActiveTab('broadcast')}
-                        className="w-full py-2.5 bg-white text-teal-600 rounded-xl font-semibold text-[9px] uppercase tracking-wider shadow-lg hover:bg-orange-500 hover:text-white transition-all transform hover:-translate-y-1"
-                      >
-                        Open Message Center
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
-                    <h4 className="font-semibold text-slate-900 uppercase tracking-wider text-[9px] mb-4 flex items-center gap-2">
-                      <Compass size={14} className="text-orange-500" /> Platform Insights
-                    </h4>
-                    <div className="space-y-3">
-                      {[
-                        { label: 'Security Protocols', value: 'Optimized', icon: Shield, color: 'text-emerald-500 bg-emerald-50' },
-                        { label: 'Cloud Sync', value: 'Active', icon: Orbit, color: 'text-teal-500 bg-teal-50' }
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
-                          <div className="flex items-center gap-3">
-                            <div className={`${item.color} p-2 rounded-xl`}><item.icon size={14} /></div>
-                            <span className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">{item.label}</span>
-                          </div>
-                          <span className="text-[9px] font-semibold text-slate-900 uppercase">{item.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                
               </div>
             </div>
           )}
@@ -906,6 +1105,23 @@ const AdminDashboard = () => {
                                       <button onClick={() => handleViewDetails(p)} className="p-2 bg-slate-50 text-slate-400 hover:text-teal-600 hover:bg-white hover:shadow-md rounded-xl transition-all">
                                         <Eye size={15} />
                                       </button>
+                                      {p.isBlocked ? (
+                                        <button 
+                                          onClick={(e) => { e.stopPropagation(); handleUnblockProfessional(p._id); }} 
+                                          className="p-2 bg-green-50 text-green-500 hover:text-green-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
+                                          title="Unblock Professional"
+                                        >
+                                          <CheckCircle2 size={15} />
+                                        </button>
+                                      ) : (
+                                        <button 
+                                          onClick={(e) => { e.stopPropagation(); handleBlockProfessional(p._id, 3); }} 
+                                          className="p-2 bg-orange-50 text-orange-500 hover:text-orange-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
+                                          title="Block Professional (3 days)"
+                                        >
+                                          <ShieldAlert size={15} />
+                                        </button>
+                                      )}
                                       <button 
                                         onClick={(e) => { e.stopPropagation(); handleDeleteProfessional(p._id); }} 
                                         className="p-2 bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
@@ -1344,7 +1560,7 @@ const AdminDashboard = () => {
             const handleAddCategory = async (e) => {
               e.preventDefault();
               if (!newCategoryLabel.trim() || !newCategoryValue.trim()) {
-                alert('Both label and value are required');
+                toast.error('Both label and value are required');
                 return;
               }
               try {
@@ -1365,13 +1581,14 @@ const AdminDashboard = () => {
                   // Reset file input
                   const fileInput = document.getElementById('cat-image-input');
                   if (fileInput) fileInput.value = '';
+                  toast.success('Category added successfully!');
                   fetchDashboardData();
                 } else {
-                  alert(data.message || 'Failed to add category');
+                  toast.error(data.message || 'Failed to add category');
                 }
               } catch (err) {
                 console.error(err);
-                alert('Error adding category');
+                toast.error('Error adding category');
               }
             };
 
@@ -1384,10 +1601,14 @@ const AdminDashboard = () => {
                   try {
                     const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
                     const data = await res.json();
-                    if (data.success) fetchDashboardData();
-                    else alert(data.message || 'Failed to delete category');
+                    if (data.success) {
+                      toast.success('Category deleted successfully!');
+                      fetchDashboardData();
+                    } else {
+                      toast.error(data.message || 'Failed to delete category');
+                    }
                   } catch (err) {
-                    alert('Error deleting category');
+                    toast.error('Error deleting category');
                   }
                 },
                 type: 'danger'
@@ -2168,6 +2389,111 @@ const AdminDashboard = () => {
         confirmText={confirmDialog.confirmText}
         type={confirmDialog.type}
       />
+
+      {/* Notification Modal */}
+      {showNotificationModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setShowNotificationModal(false)}></div>
+          <div className={`relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 ${
+            darkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white border border-slate-100'
+          }`}>
+            {/* Header */}
+            <div className={`px-6 py-4 border-b flex items-center justify-between ${
+              darkMode ? 'border-slate-800 bg-slate-800/50' : 'border-slate-100 bg-slate-50'
+            }`}>
+              <div className="flex items-center gap-3">
+                <Bell size={20} className="text-teal-500" />
+                <h2 className={`font-bold text-lg ${darkMode ? 'text-slate-100' : 'text-slate-900'}`}>
+                  Notifications
+                </h2>
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <span className="px-2 py-1 text-xs font-bold bg-orange-500 text-white rounded-full">
+                    {notifications.filter(n => !n.read).length}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setShowNotificationModal(false)}
+                className={`p-2 rounded-lg transition-colors ${
+                  darkMode 
+                    ? 'text-slate-400 hover:bg-slate-800' 
+                    : 'text-slate-400 hover:bg-slate-100'
+                }`}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Notifications List */}
+            <div className={`max-h-[500px] overflow-y-auto ${darkMode ? 'bg-slate-900' : 'bg-white'}`}>
+              {notifications && notifications.length > 0 ? (
+                <div className="divide-y divide-slate-100">
+                  {notifications.map((notification, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        handleNotificationClick(notification._id);
+                        setShowNotificationModal(false);
+                      }}
+                      className={`p-4 cursor-pointer transition-colors ${
+                        !notification.read
+                          ? darkMode
+                            ? 'bg-slate-800/50 hover:bg-slate-800'
+                            : 'bg-teal-50 hover:bg-teal-100'
+                          : darkMode
+                          ? 'hover:bg-slate-800'
+                          : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          notification.type === 'success'
+                            ? 'bg-green-100 text-green-600'
+                            : notification.type === 'error'
+                            ? 'bg-red-100 text-red-600'
+                            : notification.type === 'warning'
+                            ? 'bg-yellow-100 text-yellow-600'
+                            : 'bg-blue-100 text-blue-600'
+                        }`}>
+                          {notification.type === 'success' && '✓'}
+                          {notification.type === 'error' && '✕'}
+                          {notification.type === 'warning' && '!'}
+                          {notification.type === 'info' && 'i'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-semibold text-sm ${
+                            darkMode ? 'text-slate-100' : 'text-slate-900'
+                          }`}>
+                            {notification.title}
+                          </p>
+                          <p className={`text-xs mt-1 ${
+                            darkMode ? 'text-slate-400' : 'text-slate-600'
+                          }`}>
+                            {notification.message}
+                          </p>
+                          <p className={`text-[10px] mt-2 ${
+                            darkMode ? 'text-slate-500' : 'text-slate-400'
+                          }`}>
+                            {new Date(notification.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        {!notification.read && (
+                          <div className="w-2 h-2 bg-teal-500 rounded-full flex-shrink-0 mt-1"></div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className={`p-8 text-center ${darkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <Bell size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm font-medium">No notifications yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
         {/* Report Review Modal */}
         {showReportModal && selectedReport && (

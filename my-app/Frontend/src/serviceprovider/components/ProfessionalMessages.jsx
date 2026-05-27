@@ -437,6 +437,7 @@ const ProfessionalMessages = () => {
                                                                     <a 
                                                                         key={idx}
                                                                         href={att.url} 
+                                                                        download={att.filename}
                                                                         target="_blank" 
                                                                         rel="noopener noreferrer"
                                                                         className={`flex items-center gap-3 p-3 rounded-2xl border no-underline transition-all ${isMe ? 'bg-white/10 border-white/20 hover:bg-white/20' : 'bg-slate-50 border-slate-100 hover:bg-white'} `}

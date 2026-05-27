@@ -87,7 +87,7 @@ const ProfessionalProfile = () => {
     if (pinLocation && pinLocation.lat) {
       fetchAddress();
     }
-  }, [pinLocation.lat, pinLocation.lng]);
+  }, [pinLocation, requestLocation]);
 
   // Review States
   const [reviews, setReviews] = useState([]);
@@ -1032,7 +1032,7 @@ const ProfessionalProfile = () => {
 
                 <form onSubmit={handleRequestService} className="p-6 md:p-8 space-y-6 max-h-[70vh] overflow-y-auto">
                   <div>
-                    <label className="block text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">Describe Your Job</label>
+                    <label className="block text-sm font-bold text-slate-900 mb-3 uppercase tracking-wider">Describe Your Issue</label>
                     <textarea
                       required
                       placeholder="What do you need help with?"

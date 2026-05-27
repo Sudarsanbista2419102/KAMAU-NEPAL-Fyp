@@ -70,22 +70,41 @@ const PaymentPage = () => {
         setProcessing(true);
         setError(null);
         try {
+            console.log("📱 Initiating Khalti payment...");
+            console.log("📍 Calling endpoint:", KHALTI_INIT_URL);
+            
             const response = await api.post(KHALTI_INIT_URL, {
                 bookingId,
                 returnUrl: `${window.location.origin}/payment/verify`
             });
 
+            console.log("✅ Khalti initiation response:", response.data);
+            
             if (response.data.success && response.data.payment_url) {
                 // Success: Redirect user to Khalti Sandbox Secure Gateway
                 console.log("🚀 Establishing Secure Bridge to Khalti Sandbox...");
                 window.location.href = response.data.payment_url;
             } else {
-                throw new Error("Neural Hub: Khalti Gateway refused connection.");
+                throw new Error(response.data.message || "Khalti Gateway refused connection");
             }
         } catch (err) {
-            console.error('Khalti relay error:', err);
-            const msg = err.response?.data?.message || err.message || 'Khalti Sandbox currently offline.';
-            setError(`Khalti Gateway: ${msg}`);
+            console.error('❌ Khalti relay error:', err);
+            console.error('Error response:', err.response?.data);
+            console.error('Error status:', err.response?.status);
+            
+            let errorMsg = `Khalti Payment Error`;
+            if (err.response?.status === 404) {
+                errorMsg = `404 Not Found: Backend route /api/payments/khalti/initiate not found.`;
+            } else if (err.response?.status === 401) {
+                errorMsg = `401 Unauthorized: Please log in again.`;
+            } else if (err.message === 'Network Error') {
+                errorMsg = `Network Error: Cannot connect to backend on port 5001.`;
+            } else {
+                errorMsg = err.response?.data?.message || err.message || 'Unknown error occurred';
+            }
+            
+            setError(errorMsg);
+            toast.error(errorMsg);
             setProcessing(false);
         }
     };
@@ -98,8 +117,13 @@ const PaymentPage = () => {
         setProcessing(true);
         setError(null);
         try {
+            console.log("📱 Initiating eSewa payment...");
+            console.log("📍 Calling endpoint:", ESEWA_INIT_URL);
+            
             const response = await api.post(ESEWA_INIT_URL, { bookingId });
 
+            console.log("✅ eSewa initiation response:", response.data);
+            
             if (response.data.success && response.data.payload) {
                 console.log("🚀 Escalating Mission to eSewa Sandbox...");
                 
@@ -121,11 +145,26 @@ const PaymentPage = () => {
                 document.body.appendChild(form);
                 form.submit();
             } else {
-                throw new Error("Neural Hub: eSewa Initiation refused.");
+                throw new Error(`eSewa API error: ${response.data.message || 'Unknown error'}`);
             }
         } catch (err) {
-            console.error('eSewa relay error:', err);
-            setError(`eSewa Gateway (404-INIT): Tried to hit ${ESEWA_INIT_URL}. Ensure Backend is on port 5001 and index.js has app.use("/api/payments", paymentRoute)`);
+            console.error('❌ eSewa relay error:', err);
+            console.error('Error response:', err.response?.data);
+            console.error('Error status:', err.response?.status);
+            
+            let errorMsg = `eSewa Payment Error`;
+            if (err.response?.status === 404) {
+                errorMsg = `404 Not Found: Backend route /api/payments/esewa/initiate not found. Ensure backend is running on port 5001.`;
+            } else if (err.response?.status === 401) {
+                errorMsg = `401 Unauthorized: Please log in again.`;
+            } else if (err.message === 'Network Error') {
+                errorMsg = `Network Error: Cannot connect to backend. Ensure backend is running on port 5001.`;
+            } else {
+                errorMsg = err.response?.data?.message || err.message || 'Unknown error occurred';
+            }
+            
+            setError(errorMsg);
+            toast.error(errorMsg);
             setProcessing(false);
         }
     };

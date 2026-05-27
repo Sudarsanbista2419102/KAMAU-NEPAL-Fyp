@@ -480,7 +480,11 @@ const ProfessionalRegistration = () => {
 
       // Update local storage to sync the profile image immediately across the app
       if (profileImage) {
-        localStorage.setItem('userProfileImage', profileImage);
+        // Store only the filename/path, not the entire base64 string if it's too large
+        const imageToStore = profileImage.length > 500 ? '' : profileImage;
+        if (imageToStore) {
+          localStorage.setItem('userProfileImage', imageToStore);
+        }
       }
 
       setSubmitted(true)

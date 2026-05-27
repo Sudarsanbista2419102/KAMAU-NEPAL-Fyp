@@ -111,6 +111,7 @@ const SignupForm = () => {
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
+        address: "Not specified", // Default address since it's required by backend
       };
 
       // Send POST request to backend

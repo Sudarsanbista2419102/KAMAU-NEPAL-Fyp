@@ -621,6 +621,7 @@ export default function MessagePage() {
                                                                                 <a 
                                                                                     key={i}
                                                                                     href={fileUrl} 
+                                                                                    download={att.filename}
                                                                                     target="_blank" 
                                                                                     rel="noopener noreferrer"
                                                                                     className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${isMe ? 'bg-orange-700/50 border-orange-500/50 hover:bg-orange-700' : 'bg-gray-50 border-gray-100 hover:bg-gray-100'} no-underline`}

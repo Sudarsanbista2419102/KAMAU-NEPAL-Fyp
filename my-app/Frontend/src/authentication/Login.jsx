@@ -82,7 +82,7 @@ const Login = () => {
       } else if (err.response?.status === 404) {
         setMessage(t('user_not_found') || "User not found. Please sign up first.");
       } else if (err.response?.status === 401) {
-        setMessage(t('email_not_verified') || "Email not verified. Please verify OTP first.");
+        setMessage(t('user_not_found') || "User does not exist");
       } else if (err.response?.data?.message) {
         setMessage(err.response.data.message);
       } else {

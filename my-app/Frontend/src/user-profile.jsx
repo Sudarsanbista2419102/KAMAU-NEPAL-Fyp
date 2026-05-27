@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { useNavigate } from 'react-router-dom'
 import axios from "axios"
+import toast from 'react-hot-toast'
 import { Camera, Mail, Phone, MapPin, CheckCircle2, ArrowLeft, AlertCircle, Menu, X, Bell, Lock, ShieldCheck, Key, UserCircle, Moon, Sun, Globe, ChevronLeft } from "lucide-react"
 import Sidebar from './components/Sidebar'
 import Logo from './Logo'
@@ -171,7 +172,11 @@ export default function UserProfile() {
 
           if (user.profileImage) {
             setProfileImage(user.profileImage)
-            localStorage.setItem("userProfileImage", user.profileImage)
+            // Store only the filename/path, not large base64 strings
+            const imageToStore = user.profileImage.length > 500 ? '' : user.profileImage;
+            if (imageToStore) {
+              localStorage.setItem("userProfileImage", imageToStore)
+            }
           }
 
           // Update localStorage with database values (only if they exist)
@@ -410,8 +415,12 @@ export default function UserProfile() {
       localStorage.setItem("userLocation", formData.location)
 
       if (profileImage) {
-        localStorage.setItem("userProfileImage", profileImage)
-        console.log("Profile image saved to localStorage");
+        // Store only the filename/path, not large base64 strings
+        const imageToStore = profileImage.length > 500 ? '' : profileImage;
+        if (imageToStore) {
+          localStorage.setItem("userProfileImage", imageToStore)
+          console.log("Profile image saved to localStorage");
+        }
       }
 
       setSuccessMessage("Profile updated successfully!")
@@ -562,6 +571,7 @@ export default function UserProfile() {
       )
 
       setSuccessMessage("Password successfully updated!")
+      toast.success("Password changed successfully!")
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
       setTimeout(() => setSuccessMessage(""), 3000)
     } catch (error) {

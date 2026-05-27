@@ -30,7 +30,11 @@ const ForgotPassword = () => {
         }
         // If email failed to send, inform user to check console for OTP
         if (response.data.emailFailed) {
-          toast.error('Email delivery failed. Check console for OTP (development fallback).');
+          toast.error('Email delivery failed. Check browser console for OTP (development fallback).', {
+            duration: 5000,
+            icon: '⚠️'
+          });
+          console.warn('📧 Email delivery failed. OTP is available in backend console logs.');
         }
         setIsSubmitted(true);
         toast.success(response.data.message || 'Reset link sent!');

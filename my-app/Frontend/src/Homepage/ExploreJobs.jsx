@@ -271,13 +271,13 @@ export default function ExploreJobs() {
                     {/* Center: Navigation Links */}
                     <div className="hidden md:flex flex-1 items-center justify-center gap-10">
                         {['Companies', 'Services', 'People'].map((item) => (
-                            <Link 
+                            <button 
                                 key={item} 
-                                to={`/${item.toLowerCase()}`} 
+                                onClick={() => navigate(`/${item.toLowerCase()}`)} 
                                 className={`text-sm font-semibold transition-colors ${location.pathname === `/${item.toLowerCase()}` ? 'text-teal-600 font-bold' : 'text-slate-600 hover:text-teal-600'}`}
                             >
                                 {item}
-                            </Link>
+                            </button>
                         ))}
                     </div>
 
@@ -674,11 +674,11 @@ export default function ExploreJobs() {
             <footer className="bg-white border-t border-slate-100 py-12 px-6">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
                     <div className="flex gap-8 text-xs font-black text-slate-400 uppercase tracking-widest">
-                        <Link to="/">Home</Link>
-                        <Link to="/services">Services</Link>
-                        <Link to="/terms">Terms</Link>
-                        <Link to="/companies">Companies</Link>
-                        <Link to="/signup">Sign Up</Link>
+                        <button onClick={() => navigate("/")} className="hover:text-slate-900 transition">Home</button>
+                        <button onClick={() => navigate("/services")} className="hover:text-slate-900 transition">Services</button>
+                        <button onClick={() => navigate("/terms")} className="hover:text-slate-900 transition">Terms</button>
+                        <button onClick={() => navigate("/companies")} className="hover:text-slate-900 transition">Companies</button>
+                        <button onClick={() => navigate("/signup")} className="hover:text-slate-900 transition">Sign Up</button>
                     </div>
                     <div className="flex gap-4">
                         {['facebook', 'instagram', 'youtube'].map(social => (

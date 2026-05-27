@@ -245,6 +245,20 @@ export const getProfessionalProfile = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Auto-unblock professionals whose block period has expired
+    await ProfessionalModel.updateMany(
+      {
+        isBlocked: true,
+        blockedUntil: { $lte: new Date() }
+      },
+      {
+        $set: {
+          isBlocked: false,
+          blockedUntil: null
+        }
+      }
+    );
+
     const professional = await ProfessionalModel.findOne({
       _id: id
     }).select('-verificationDocuments');
@@ -253,6 +267,16 @@ export const getProfessionalProfile = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Professional profile not found'
+      });
+    }
+
+    // Check if professional is currently blocked
+    if (professional.isBlocked && professional.blockedUntil && new Date(professional.blockedUntil) > new Date()) {
+      return res.status(403).json({
+        success: false,
+        message: 'This professional is temporarily unavailable',
+        isBlocked: true,
+        blockedUntil: professional.blockedUntil
       });
     }
 
@@ -276,7 +300,31 @@ export const getAllProfessionals = async (req, res) => {
   try {
     const { page = 1, limit = 10, serviceCategory, serviceArea, verificationStatus = 'verified' } = req.query;
 
-    const query = { isVerified: true };
+    // Auto-unblock professionals whose block period has expired
+    await ProfessionalModel.updateMany(
+      {
+        isBlocked: true,
+        blockedUntil: { $lte: new Date() }
+      },
+      {
+        $set: {
+          isBlocked: false,
+          blockedUntil: null
+        }
+      }
+    );
+
+    const query = { 
+      isVerified: true,
+      $or: [
+        { isBlocked: false },
+        { isBlocked: { $exists: false } },
+        { 
+          isBlocked: true,
+          blockedUntil: { $lte: new Date() }
+        }
+      ]
+    };
 
     if (serviceCategory) {
       query.serviceCategory = serviceCategory;
@@ -322,7 +370,31 @@ export const searchProfessionals = async (req, res) => {
   try {
     const { serviceCategory, serviceArea } = req.query;
 
-    const query = { isVerified: true };
+    // Auto-unblock professionals whose block period has expired
+    await ProfessionalModel.updateMany(
+      {
+        isBlocked: true,
+        blockedUntil: { $lte: new Date() }
+      },
+      {
+        $set: {
+          isBlocked: false,
+          blockedUntil: null
+        }
+      }
+    );
+
+    const query = { 
+      isVerified: true,
+      $or: [
+        { isBlocked: false },
+        { isBlocked: { $exists: false } },
+        { 
+          isBlocked: true,
+          blockedUntil: { $lte: new Date() }
+        }
+      ]
+    };
 
     if (serviceCategory) {
       query.serviceCategory = serviceCategory;
@@ -622,6 +694,20 @@ export const getProfessionalByUsername = async (req, res) => {
   try {
     const { username } = req.params;
 
+    // Auto-unblock professionals whose block period has expired
+    await ProfessionalModel.updateMany(
+      {
+        isBlocked: true,
+        blockedUntil: { $lte: new Date() }
+      },
+      {
+        $set: {
+          isBlocked: false,
+          blockedUntil: null
+        }
+      }
+    );
+
     const professional = await ProfessionalModel.findOne({
       username,
       isVerified: true
@@ -631,6 +717,16 @@ export const getProfessionalByUsername = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: 'Professional not found'
+      });
+    }
+
+    // Check if professional is currently blocked
+    if (professional.isBlocked && professional.blockedUntil && new Date(professional.blockedUntil) > new Date()) {
+      return res.status(403).json({
+        success: false,
+        message: 'This professional is temporarily unavailable',
+        isBlocked: true,
+        blockedUntil: professional.blockedUntil
       });
     }
 
