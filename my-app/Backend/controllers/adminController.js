@@ -997,6 +997,57 @@ export const unblockProfessional = async (req, res) => {
 };
 
 /**
+ * Update professional's service status (liveStatus)
+ * @param {Object} req - Request object (params: id, body: liveStatus)
+ * @param {Object} res - Response object
+ */
+export const updateProfessionalServiceStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { liveStatus } = req.body;
+
+    if (!liveStatus || !['Free', 'Ongoing', 'Offline'].includes(liveStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid service status. Must be Free, Ongoing, or Offline'
+      });
+    }
+
+    const professional = await ProfessionalModel.findById(id);
+    if (!professional) {
+      return res.status(404).json({
+        success: false,
+        message: 'Professional not found'
+      });
+    }
+
+    // Only allow status update for verified professionals
+    if (professional.verificationStatus !== 'verified') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only verified professionals can have their service status updated'
+      });
+    }
+
+    professional.liveStatus = liveStatus;
+    await professional.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Service status updated to ${liveStatus}`,
+      data: professional
+    });
+  } catch (error) {
+    console.error('Error updating professional service status:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update service status',
+      error: error.message
+    });
+  }
+};
+
+/**
  * Check and auto-unblock professionals whose block period has expired
  * @returns {Promise} Resolves with number of auto-unblocked professionals
  */

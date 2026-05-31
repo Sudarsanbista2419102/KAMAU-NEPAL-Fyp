@@ -149,10 +149,11 @@ const EditProfileModal = ({ isOpen, onClose, professionalData, onUpdate }) => {
                             type="text" 
                             name="firstName"
                             value={formData.firstName}
-                            onChange={handleInputChange}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-teal-500/10 focus:border-teal-500/40 outline-none transition-all"
+                            disabled
+                            className="w-full bg-slate-100 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-teal-500/10 focus:border-teal-500/40 outline-none transition-all cursor-not-allowed opacity-60"
                           />
                         </div>
+                        <p className="text-[9px] text-slate-400 font-semibold ml-1">✓ Fixed by admin</p>
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Last Name</label>
@@ -162,10 +163,11 @@ const EditProfileModal = ({ isOpen, onClose, professionalData, onUpdate }) => {
                             type="text" 
                             name="lastName"
                             value={formData.lastName}
-                            onChange={handleInputChange}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-teal-500/10 focus:border-teal-500/40 outline-none transition-all"
+                            disabled
+                            className="w-full bg-slate-100 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-teal-500/10 focus:border-teal-500/40 outline-none transition-all cursor-not-allowed opacity-60"
                           />
                         </div>
+                        <p className="text-[9px] text-slate-400 font-semibold ml-1">✓ Fixed by admin</p>
                       </div>
                     </div>
 
@@ -189,12 +191,13 @@ const EditProfileModal = ({ isOpen, onClose, professionalData, onUpdate }) => {
                           <select 
                             name="serviceCategory"
                             value={formData.serviceCategory}
-                            onChange={handleInputChange}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-teal-500/10 focus:border-teal-500/40 outline-none transition-all appearance-none cursor-pointer"
+                            disabled
+                            className="w-full bg-slate-100 border border-slate-200 rounded-2xl pl-12 pr-4 py-3.5 text-sm font-bold focus:ring-2 focus:ring-teal-500/10 focus:border-teal-500/40 outline-none transition-all appearance-none cursor-not-allowed opacity-60"
                           >
                             {serviceCategories.map(cat => <option key={cat.value} value={cat.value}>{cat.label}</option>)}
                           </select>
                         </div>
+                        <p className="text-[9px] text-slate-400 font-semibold ml-1">✓ Fixed by admin</p>
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Hourly Wage (NPR)</label>

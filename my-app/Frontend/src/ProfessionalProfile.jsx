@@ -196,20 +196,35 @@ const ProfessionalProfile = () => {
   };
 
   const STANDARD_TIME_SLOTS = [
-    { label: '6AM - 7AM', start: '06:00', end: '07:00' },
-    { label: '7AM - 8AM', start: '07:00', end: '08:00' },
-    { label: '8AM - 9AM', start: '08:00', end: '09:00' },
-    { label: '9AM - 10AM', start: '09:00', end: '10:00' },
-    { label: '10AM - 11AM', start: '10:00', end: '11:00' },
-    { label: '11AM - 12PM', start: '11:00', end: '12:00' },
-    { label: '12PM - 1PM', start: '12:00', end: '13:00' },
-    { label: '1PM - 2PM', start: '13:00', end: '14:00' },
-    { label: '2PM - 3PM', start: '14:00', end: '15:00' },
-    { label: '3PM - 4PM', start: '15:00', end: '16:00' },
-    { label: '4PM - 5PM', start: '16:00', end: '17:00' },
-    { label: '5PM - 6PM', start: '17:00', end: '18:00' },
-    { label: '6PM - 7PM', start: '18:00', end: '19:00' },
-    { label: '7PM - 8PM', start: '19:00', end: '20:00' },
+    // 1-hour slots
+    { label: '6AM - 7AM', start: '06:00', end: '07:00', duration: '1 hour' },
+    { label: '7AM - 8AM', start: '07:00', end: '08:00', duration: '1 hour' },
+    { label: '8AM - 9AM', start: '08:00', end: '09:00', duration: '1 hour' },
+    { label: '9AM - 10AM', start: '09:00', end: '10:00', duration: '1 hour' },
+    { label: '10AM - 11AM', start: '10:00', end: '11:00', duration: '1 hour' },
+    { label: '11AM - 12PM', start: '11:00', end: '12:00', duration: '1 hour' },
+    { label: '12PM - 1PM', start: '12:00', end: '13:00', duration: '1 hour' },
+    { label: '1PM - 2PM', start: '13:00', end: '14:00', duration: '1 hour' },
+    { label: '2PM - 3PM', start: '14:00', end: '15:00', duration: '1 hour' },
+    { label: '3PM - 4PM', start: '15:00', end: '16:00', duration: '1 hour' },
+    { label: '4PM - 5PM', start: '16:00', end: '17:00', duration: '1 hour' },
+    { label: '5PM - 6PM', start: '17:00', end: '18:00', duration: '1 hour' },
+    { label: '6PM - 7PM', start: '18:00', end: '19:00', duration: '1 hour' },
+    { label: '7PM - 8PM', start: '19:00', end: '20:00', duration: '1 hour' },
+    // 2-hour slots
+    { label: '6AM - 8AM', start: '06:00', end: '08:00', duration: '2 hours' },
+    { label: '7AM - 9AM', start: '07:00', end: '09:00', duration: '2 hours' },
+    { label: '8AM - 10AM', start: '08:00', end: '10:00', duration: '2 hours' },
+    { label: '9AM - 11AM', start: '09:00', end: '11:00', duration: '2 hours' },
+    { label: '10AM - 12PM', start: '10:00', end: '12:00', duration: '2 hours' },
+    { label: '11AM - 1PM', start: '11:00', end: '13:00', duration: '2 hours' },
+    { label: '12PM - 2PM', start: '12:00', end: '14:00', duration: '2 hours' },
+    { label: '1PM - 3PM', start: '13:00', end: '15:00', duration: '2 hours' },
+    { label: '2PM - 4PM', start: '14:00', end: '16:00', duration: '2 hours' },
+    { label: '3PM - 5PM', start: '15:00', end: '17:00', duration: '2 hours' },
+    { label: '4PM - 6PM', start: '16:00', end: '18:00', duration: '2 hours' },
+    { label: '5PM - 7PM', start: '17:00', end: '19:00', duration: '2 hours' },
+    { label: '6PM - 8PM', start: '18:00', end: '20:00', duration: '2 hours' },
   ];
 
   const getAvailableSlots = (dateString, availability, jobType) => {
@@ -389,6 +404,15 @@ const ProfessionalProfile = () => {
 
     if (selectedDate < today) {
       toast.error('You cannot book on a past date');
+      return;
+    }
+
+    // Check if booking is within 3 days limit
+    const maxDate = new Date(today);
+    maxDate.setDate(maxDate.getDate() + 3);
+    
+    if (selectedDate > maxDate) {
+      toast.error('Bookings are only available within 3 days from today');
       return;
     }
 
@@ -1056,6 +1080,13 @@ const ProfessionalProfile = () => {
                           const localDate = new Date(now.getTime() - (offset * 60 * 1000));
                           return localDate.toISOString().split('T')[0];
                         })()}
+                        max={(() => {
+                          const now = new Date();
+                          const threeDaysLater = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
+                          const offset = now.getTimezoneOffset();
+                          const localDate = new Date(threeDaysLater.getTime() - (offset * 60 * 1000));
+                          return localDate.toISOString().split('T')[0];
+                        })()}
                         className="w-full p-4 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 font-medium"
                         value={requestDate}
                         onChange={(e) => setRequestDate(e.target.value)}
@@ -1100,7 +1131,8 @@ const ProfessionalProfile = () => {
                                     : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300'
                                 }`}
                               >
-                                {slot.label}
+                                <div>{slot.label}</div>
+                                <div className="text-[9px] font-semibold mt-0.5 opacity-75">{slot.duration}</div>
                               </button>
                             ))
                           ) : (

@@ -19,6 +19,7 @@ import {
   getRevenueAnalytics,
   blockProfessional,
   unblockProfessional,
+  updateProfessionalServiceStatus,
   checkAndAutoUnblockProfessionals,
 } from './controllers/adminController.js';
 import { verifyAdminToken, checkAdminRole } from './adminAuthMiddleware.js';
@@ -100,6 +101,10 @@ router.patch('/professionals/:id/block', blockProfessional);
 
 // PATCH /api/admin/professionals/:id/unblock
 router.patch('/professionals/:id/unblock', unblockProfessional);
+
+// PATCH /api/admin/professionals/:id/service-status
+// Body: { liveStatus: 'Free'|'Ongoing'|'Offline' }
+router.patch('/professionals/:id/service-status', updateProfessionalServiceStatus);
 
 // POST /api/admin/check-and-auto-unblock
 // Check for expired blocks and auto-unblock professionals

@@ -69,8 +69,17 @@ const RoutePath = ({ start, end }) => {
 const RecenterMap = ({ center }) => {
   const map = useMap();
   useEffect(() => {
-    if (center && center[0] && center[1]) {
-      map.setView(center, map.getZoom());
+    if (center && center[0] && center[1] && map && map._container) {
+      try {
+        // Add a small delay to ensure map is fully initialized
+        setTimeout(() => {
+          if (map && map._container && map.getZoom) {
+            map.setView(center, map.getZoom(), { animate: false });
+          }
+        }, 100);
+      } catch (error) {
+        console.error('Map view error:', error);
+      }
     }
   }, [center, map]);
   return null;
@@ -154,13 +163,25 @@ const CustomerMap = ({ bookings, professionalLocation }) => {
           {/* Zoom Controls */}
           <div className="absolute top-6 right-6 z-[1000] flex flex-col gap-2">
             <button 
-              onClick={() => setZoom(prev => Math.min(prev + 1, 18))}
+              onClick={() => {
+                try {
+                  setZoom(prev => Math.min(prev + 1, 18));
+                } catch (error) {
+                  console.error('Zoom error:', error);
+                }
+              }}
               className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-600 hover:bg-emerald-500 hover:text-white transition-all active:scale-95"
             >
               <Plus size={20} />
             </button>
             <button 
-              onClick={() => setZoom(prev => Math.max(prev - 1, 3))}
+              onClick={() => {
+                try {
+                  setZoom(prev => Math.max(prev - 1, 3));
+                } catch (error) {
+                  console.error('Zoom error:', error);
+                }
+              }}
               className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-600 hover:bg-emerald-500 hover:text-white transition-all active:scale-95"
             >
               <Minus size={20} />

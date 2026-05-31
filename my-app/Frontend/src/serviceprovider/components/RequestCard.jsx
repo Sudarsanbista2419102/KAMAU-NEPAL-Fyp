@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { MapPin, Calendar, Clock, CheckCircle, XCircle, User, Mail, Phone, X, FileText, UserCircle } from 'lucide-react';
+import { MapPin, Calendar, Clock, CheckCircle, XCircle, User, Mail, Phone, X, FileText, UserCircle, MessageSquare } from 'lucide-react';
 import OptimizedImage from '../../components/OptimizedImage';
 
 const RequestCard = ({ request, onAction, onDownloadPDF }) => {
   const [loading, setLoading] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageContent, setMessageContent] = useState('');
+  const [messageSending, setMessageSending] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
 
   const handleAction = async (status, notes = "") => {
@@ -13,6 +16,30 @@ const RequestCard = ({ request, onAction, onDownloadPDF }) => {
     await onAction(request._id, status, notes);
     setLoading(false);
     setShowRejectionModal(false);
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!messageContent.trim() || !request.userId?._id) return;
+
+    setMessageSending(true);
+    try {
+      const { sendMessage } = await import('../../services/messageService');
+      const response = await sendMessage({
+        receiverId: request.userId._id,
+        subject: `Regarding: ${request.serviceTitle}`,
+        content: messageContent
+      });
+
+      if (response.success) {
+        setMessageContent('');
+        setShowMessageModal(false);
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    } finally {
+      setMessageSending(false);
+    }
   };
 
   const statusColors = {
@@ -111,6 +138,13 @@ const RequestCard = ({ request, onAction, onDownloadPDF }) => {
                     <CheckCircle size={14} />
                     Ongoing
                   </div>
+                  <button 
+                    onClick={() => setShowMessageModal(true)}
+                    title="Message Customer"
+                    className="p-3 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 rounded-xl transition-all active:scale-95"
+                  >
+                    <MessageSquare size={18} />
+                  </button>
                   <button 
                     onClick={() => onDownloadPDF(request)}
                     title="Download Customer Information"
@@ -251,6 +285,57 @@ const RequestCard = ({ request, onAction, onDownloadPDF }) => {
                 Confirm Decline
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Message Modal */}
+      {showMessageModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-md rounded-[32px] shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-300 p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Message Customer</h3>
+              <button onClick={() => setShowMessageModal(false)} className="text-slate-400 hover:text-slate-600">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <p className="text-sm text-slate-500 font-medium mb-6 leading-relaxed">
+              Send a message to <span className="text-slate-900 font-bold">{request.fullName}</span> regarding the service request.
+            </p>
+
+            <form onSubmit={handleSendMessage}>
+              <textarea
+                placeholder="Type your message here..."
+                className="w-full min-h-[120px] p-5 rounded-2xl bg-slate-50 border border-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-slate-800 font-medium resize-none mb-6"
+                value={messageContent}
+                onChange={(e) => setMessageContent(e.target.value)}
+                required
+              />
+
+              <div className="flex gap-4">
+                <button 
+                  type="button"
+                  onClick={() => setShowMessageModal(false)}
+                  className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={messageSending || !messageContent.trim()}
+                  className="flex-1 py-4 bg-blue-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all disabled:opacity-50 shadow-lg shadow-blue-100 flex items-center justify-center gap-2"
+                >
+                  {messageSending ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <>
+                      <MessageSquare size={14} />
+                      Send Message
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

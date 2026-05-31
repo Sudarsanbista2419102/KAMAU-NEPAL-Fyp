@@ -86,6 +86,7 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterServiceStatus, setFilterServiceStatus] = useState(''); // 'ongoing', 'free', or ''
   const [reportStatusFilter, setReportStatusFilter] = useState('All');
 
   // Modal States
@@ -208,7 +209,7 @@ const AdminDashboard = () => {
       }, 500);
       return () => clearTimeout(delaySearch);
     }
-  }, [searchTerm, filterCategory, filterStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchTerm, filterCategory, filterStatus, filterServiceStatus]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch notifications periodically
   useEffect(() => {
@@ -238,13 +239,33 @@ const AdminDashboard = () => {
             status: activeTab === 'requests' ? 'pending' : (filterStatus || 'verified'),
             limit: 50
           });
-          if (searchRes.success) setProfessionals(searchRes.data);
+          if (searchRes.success) {
+            let filtered = searchRes.data;
+            // Apply service status filter
+            if (filterServiceStatus) {
+              filtered = filtered.filter(p => {
+                const serviceStatus = p.liveStatus || p.serviceStatus || 'Free';
+                return serviceStatus.toLowerCase() === filterServiceStatus.toLowerCase();
+              });
+            }
+            setProfessionals(filtered);
+          }
         } else {
           const proRes = await adminService.getAllProfessionalsForAdmin({ 
             status: activeTab === 'requests' ? 'pending' : 'verified',
             limit: 50
           });
-          if (proRes.success) setProfessionals(proRes.data);
+          if (proRes.success) {
+            let filtered = proRes.data;
+            // Apply service status filter
+            if (filterServiceStatus) {
+              filtered = filtered.filter(p => {
+                const serviceStatus = p.liveStatus || p.serviceStatus || 'Free';
+                return serviceStatus.toLowerCase() === filterServiceStatus.toLowerCase();
+              });
+            }
+            setProfessionals(filtered);
+          }
         }
       } else if (activeTab === 'users') {
         const response = await adminService.getAllUsers();
@@ -578,6 +599,17 @@ const AdminDashboard = () => {
     });
   };
 
+  const handleUpdateServiceStatus = async (id, newStatus) => {
+    try {
+      const res = await adminService.updateProfessionalServiceStatus(id, newStatus);
+      if (res.success) {
+        fetchDashboardData();
+      }
+    } catch (err) {
+      console.error('Failed to update service status:', err);
+    }
+  };
+
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: Compass, badge: null },
     { id: 'requests', label: 'Verification', icon: UserCheck, badge: stats.totalPending || null },
@@ -892,47 +924,86 @@ const AdminDashboard = () => {
                   </div>
                   
                   {/* Search and Filter UI */}
-                  <div className="flex flex-col sm:flex-row gap-3 items-center bg-white p-2 rounded-xl border border-slate-100 w-full md:w-auto">
-                    <div className="relative w-full sm:w-56">
-                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-                      <input 
-                        type="text" 
-                        placeholder="Search name, email..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 bg-slate-50 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all border border-transparent"
-                      />
-                    </div>
-                    
-                    <select 
-                      value={filterCategory}
-                      onChange={(e) => setFilterCategory(e.target.value)}
-                      className="w-full sm:w-auto px-3 py-2 bg-slate-50 rounded-lg text-[9px] font-semibold uppercase tracking-wider text-slate-600 focus:outline-none transition-all border border-transparent cursor-pointer hover:bg-slate-100"
-                    >
-                      <option value="">All Categories</option>
-                      <option value="plumbing">Plumbing</option>
-                      <option value="electrical">Electrical</option>
-                      <option value="carpentry">Carpentry</option>
-                      <option value="cleaning">Cleaning</option>
-                      <option value="painting">Painting</option>
-                      <option value="gardening">Gardening</option>
-                      <option value="mechanic">Mechanic</option>
-                      <option value="tutoring">Tutoring</option>
-                      <option value="freelancer">Freelancer</option>
-                      <option value="graphic_designer">Designer</option>
-                      <option value="developer">Developer</option>
-                    </select>
-
-                    {activeTab === 'professionals' && (
+                  <div className="flex flex-col gap-4 w-full">
+                    <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center bg-white p-3 rounded-xl border border-slate-100">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
+                        <input 
+                          type="text" 
+                          placeholder="Search name, email..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 bg-slate-50 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all border border-transparent"
+                        />
+                      </div>
+                      
                       <select 
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        className="w-full sm:w-auto px-3 py-2 bg-slate-50 rounded-lg text-[9px] font-semibold uppercase tracking-wider text-slate-600 focus:outline-none transition-all border border-transparent cursor-pointer hover:bg-slate-100"
+                        value={filterCategory}
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                        className="px-3 py-2 bg-slate-50 rounded-lg text-[9px] font-semibold uppercase tracking-wider text-slate-600 focus:outline-none transition-all border border-transparent cursor-pointer hover:bg-slate-100"
                       >
-                        <option value="verified">Verified</option>
-                        <option value="rejected">Rejected</option>
-                        <option value="pending">Pending</option>
+                        <option value="">All Categories</option>
+                        <option value="plumbing">Plumbing</option>
+                        <option value="electrical">Electrical</option>
+                        <option value="carpentry">Carpentry</option>
+                        <option value="cleaning">Cleaning</option>
+                        <option value="painting">Painting</option>
+                        <option value="gardening">Gardening</option>
+                        <option value="mechanic">Mechanic</option>
+                        <option value="tutoring">Tutoring</option>
+                        <option value="freelancer">Freelancer</option>
+                        <option value="graphic_designer">Designer</option>
+                        <option value="developer">Developer</option>
                       </select>
+
+                      {activeTab === 'professionals' && (
+                        <select 
+                          value={filterStatus}
+                          onChange={(e) => setFilterStatus(e.target.value)}
+                          className="px-3 py-2 bg-slate-50 rounded-lg text-[9px] font-semibold uppercase tracking-wider text-slate-600 focus:outline-none transition-all border border-transparent cursor-pointer hover:bg-slate-100"
+                        >
+                          <option value="verified">Verified</option>
+                          <option value="rejected">Rejected</option>
+                          <option value="pending">Pending</option>
+                        </select>
+                      )}
+                    </div>
+
+                    {/* Service Status Filter Buttons */}
+                    {activeTab === 'professionals' && (
+                      <div className="flex gap-2 flex-wrap">
+                        <button
+                          onClick={() => setFilterServiceStatus('')}
+                          className={`px-4 py-2 rounded-lg text-[9px] font-semibold uppercase tracking-wider transition-all ${
+                            filterServiceStatus === ''
+                              ? 'bg-slate-900 text-white'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          All Status
+                        </button>
+                        <button
+                          onClick={() => setFilterServiceStatus('ongoing')}
+                          className={`px-4 py-2 rounded-lg text-[9px] font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                            filterServiceStatus === 'ongoing'
+                              ? 'bg-orange-500 text-white'
+                              : 'bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100'
+                          }`}
+                        >
+                          <Lightbulb size={12} />
+                          Ongoing
+                        </button>
+                        <button
+                          onClick={() => setFilterServiceStatus('free')}
+                          className={`px-4 py-2 rounded-lg text-[9px] font-semibold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                            filterServiceStatus === 'free'
+                              ? 'bg-teal-500 text-white'
+                              : 'bg-teal-50 text-teal-600 border border-teal-200 hover:bg-teal-100'
+                          }`}
+                        >
+                          ✓ Free
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1007,6 +1078,22 @@ const AdminDashboard = () => {
                                     </div>
                                   ) : (
                                     <div className="flex justify-end gap-2">
+                                      <button 
+                                        onClick={(e) => { 
+                                          e.stopPropagation(); 
+                                          const nextStatus = p.liveStatus === 'Ongoing' ? 'Free' : 'Ongoing';
+                                          handleUpdateServiceStatus(p._id, nextStatus);
+                                        }} 
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all text-[10px] font-bold uppercase tracking-wider ${
+                                          p.liveStatus === 'Ongoing'
+                                            ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/30'
+                                            : 'bg-teal-50 text-teal-600 hover:bg-teal-100'
+                                        }`}
+                                        title={p.liveStatus === 'Ongoing' ? 'Mark as Free' : 'Mark as Ongoing'}
+                                      >
+                                        {p.liveStatus === 'Ongoing' && <Lightbulb size={12} className="animate-pulse" fill="currentColor" />}
+                                        {p.liveStatus === 'Ongoing' ? 'Ongoing' : 'Free'}
+                                      </button>
                                       <button 
                                         onClick={(e) => { e.stopPropagation(); handleDownloadPDF(p); }} 
                                         className="p-2 bg-white text-slate-400 hover:text-orange-500 border border-slate-100 rounded-xl transition-all"
@@ -1168,7 +1255,7 @@ const AdminDashboard = () => {
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                           <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} dy={10} />
-                          <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} />
+                          <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} />
                           <Tooltip 
                             contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '11px' }}
                           />
@@ -1218,7 +1305,7 @@ const AdminDashboard = () => {
                         <BarChart data={statusData}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                           <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} dy={10} />
-                          <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} />
+                          <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} />
                           <Tooltip 
                              cursor={{fill: '#f8fafc'}}
                              contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '11px' }}
@@ -1240,7 +1327,7 @@ const AdminDashboard = () => {
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Free
                         </span>
                         <span className="flex items-center gap-1 text-[9px] font-semibold text-slate-400 uppercase tracking-wider ml-3">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Ongoing
+                          <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span> Ongoing
                         </span>
                         <span className="flex items-center gap-1 text-[9px] font-semibold text-slate-400 uppercase tracking-wider ml-3">
                           <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Offline
@@ -1261,7 +1348,7 @@ const AdminDashboard = () => {
                             tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} 
                             dy={10} 
                           />
-                          <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} />
+                          <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} />
                           <Tooltip 
                              cursor={{fill: '#f8fafc'}}
                              contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '11px' }}
@@ -1272,7 +1359,7 @@ const AdminDashboard = () => {
                                 key={`cell-${index}`} 
                                 fill={
                                   entry.status === 'Free' ? '#10b981' : 
-                                  entry.status === 'Ongoing' ? '#3b82f6' : 
+                                  entry.status === 'Ongoing' ? '#f97316' : 
                                   '#cbd5e1'
                                 } 
                                 />
@@ -1308,7 +1395,7 @@ const AdminDashboard = () => {
                             <LineChart data={revenueData.timeline}>
                               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} dy={10} />
-                              <YAxis axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} />
+                              <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} />
                               <Tooltip 
                                 contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '11px' }}
                                 formatter={(value) => [`रू ${value.toLocaleString()}`, 'Revenue']}
@@ -1328,7 +1415,7 @@ const AdminDashboard = () => {
                           <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={revenueData.categoryRevenue} layout="vertical">
                               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-                              <XAxis type="number" hide />
+                              <XAxis type="number" allowDecimals={false} hide />
                               <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 9, fontWeight: 700, fill: '#64748b'}} width={80} />
                               <Tooltip 
                                 cursor={{fill: 'transparent'}}
@@ -2031,12 +2118,13 @@ const AdminDashboard = () => {
                   <h3 className="text-2xl font-black text-slate-900">{selectedProfessional.firstName} {selectedProfessional.lastName}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     <StatusBadge status={selectedProfessional.verificationStatus} />
-                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border flex items-center ${
-                      selectedProfessional.liveStatus === 'Ongoing' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border flex items-center gap-1 ${
+                      selectedProfessional.liveStatus === 'Ongoing' ? 'bg-orange-50 text-orange-600 border-orange-200' :
                       selectedProfessional.liveStatus === 'Offline' ? 'bg-slate-100 text-slate-500 border-slate-200' :
                       'bg-emerald-50 text-emerald-600 border-emerald-200'
                     }`}>
-                      {(selectedProfessional.liveStatus === 'Free' || !selectedProfessional.liveStatus) && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>}
+                      {selectedProfessional.liveStatus === 'Ongoing' && <Lightbulb size={11} className="animate-pulse" fill="currentColor" />}
+                      {(selectedProfessional.liveStatus === 'Free' || !selectedProfessional.liveStatus) && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>}
                       {selectedProfessional.liveStatus || 'Free'}
                     </span>
                     <span className="text-[10px] font-black text-teal-600 uppercase tracking-widest">@{selectedProfessional.username}</span>

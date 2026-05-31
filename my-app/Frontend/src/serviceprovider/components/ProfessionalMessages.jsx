@@ -433,10 +433,18 @@ const ProfessionalMessages = () => {
                                                     `}>
                                                         {msg.attachments?.length > 0 && (
                                                             <div className="mb-3 space-y-2">
-                                                                {msg.attachments.map((att, idx) => (
+                                                                {msg.attachments.map((att, idx) => {
+                                                                    const apiBaseUrl = 'http://localhost:5001';
+                                                                    const fileUrl = att.url.startsWith('http') 
+                                                                        ? att.url 
+                                                                        : att.url.startsWith('/') 
+                                                                            ? `${apiBaseUrl}${att.url}` 
+                                                                            : `${apiBaseUrl}/${att.url.replace(/\\/g, '/')}`;
+                                                                    
+                                                                    return (
                                                                     <a 
                                                                         key={idx}
-                                                                        href={att.url} 
+                                                                        href={fileUrl} 
                                                                         download={att.filename}
                                                                         target="_blank" 
                                                                         rel="noopener noreferrer"
@@ -451,7 +459,8 @@ const ProfessionalMessages = () => {
                                                                         </div>
                                                                         <Download size={14} className="opacity-40" />
                                                                     </a>
-                                                                ))}
+                                                                    );
+                                                                })}
                                                             </div>
                                                         )}
                                                         <p className="whitespace-pre-wrap">{msg.content}</p>

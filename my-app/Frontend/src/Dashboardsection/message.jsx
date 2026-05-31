@@ -596,22 +596,33 @@ export default function MessagePage() {
                                                                     <div className="mb-3 space-y-3">
                                                                         {msg.attachments.map((att, i) => {
                                                                             const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(att.filename) || att.mimetype?.startsWith('image/');
-                                                                            const fileUrl = att.url.startsWith('http') ? att.url : `/${att.url.replace(/\\/g, '/')}`;
+                                                                            const apiBaseUrl = 'http://localhost:5001';
+                                                                            const fileUrl = att.url.startsWith('http') 
+                                                                                ? att.url 
+                                                                                : att.url.startsWith('/') 
+                                                                                    ? `${apiBaseUrl}${att.url}` 
+                                                                                    : `${apiBaseUrl}/${att.url.replace(/\\/g, '/')}`;
 
                                                                             if (isImage) {
                                                                                 return (
                                                                                     <div 
                                                                                         key={i} 
-                                                                                        className="relative group cursor-pointer overflow-hidden rounded-2xl border border-gray-100 shadow-sm"
-                                                                                        onClick={() => setPreviewImage({ url: fileUrl, name: att.filename })}
+                                                                                        className="relative group overflow-hidden rounded-2xl border border-gray-100 shadow-sm cursor-pointer"
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation();
+                                                                                            setPreviewImage({ url: fileUrl, name: att.filename });
+                                                                                        }}
                                                                                     >
                                                                                         <img 
                                                                                             src={fileUrl} 
                                                                                             alt={att.filename} 
-                                                                                            className="w-full h-auto max-h-64 object-cover hover:scale-105 transition-transform duration-500" 
+                                                                                            className="w-full h-auto max-h-64 object-cover group-hover:opacity-90 transition-opacity" 
+                                                                                            draggable={false}
                                                                                         />
-                                                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                                                                            <Plus className="text-white opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 transition-all" size={32} />
+                                                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center pointer-events-none">
+                                                                                            <div className="px-4 py-2 bg-white text-gray-900 rounded-lg font-semibold text-sm opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all shadow-lg">
+                                                                                                View Image
+                                                                                            </div>
                                                                                         </div>
                                                                                     </div>
                                                                                 );
@@ -835,15 +846,9 @@ export default function MessagePage() {
                                 src={previewImage.url} 
                                 alt={previewImage.name} 
                                 className="w-full h-auto max-h-[80vh] object-contain rounded-xl shadow-2xl"
+                                draggable={false}
                             />
                             <p className="mt-6 text-white font-medium text-lg">{previewImage.name}</p>
-                            <a 
-                                href={previewImage.url} 
-                                download={previewImage.name}
-                                className="mt-4 px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl border border-white/20 transition-all flex items-center gap-2"
-                            >
-                                <Download size={18} /> Download Original
-                            </a>
                         </motion.div>
                     </div>
                 )}

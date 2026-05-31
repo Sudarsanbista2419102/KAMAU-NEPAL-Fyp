@@ -27,8 +27,17 @@ const LocationMarker = ({ position, setPosition }) => {
 const RecenterMap = ({ position }) => {
   const map = useMap();
   useEffect(() => {
-    if (position) {
-      map.setView(position, map.getZoom());
+    if (position && map && map._container) {
+      try {
+        // Add a small delay to ensure map is fully initialized
+        setTimeout(() => {
+          if (map && map._container && map.getZoom()) {
+            map.setView(position, map.getZoom(), { animate: true });
+          }
+        }, 100);
+      } catch (error) {
+        console.error('Map view error:', error);
+      }
     }
   }, [position, map]);
   return null;

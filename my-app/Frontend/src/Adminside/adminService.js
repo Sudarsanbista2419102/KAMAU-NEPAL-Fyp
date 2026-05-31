@@ -442,6 +442,28 @@ export const unblockProfessional = async (id) => {
 };
 
 /**
+ * Update professional's service status (liveStatus)
+ * @param {String} id - Professional ID
+ * @param {String} status - New status ('Free', 'Ongoing', 'Offline')
+ * @returns {Promise}
+ */
+export const updateProfessionalServiceStatus = async (id, status) => {
+  try {
+    const response = await axios.patch(`http://localhost:5001/api/admin/professionals/${id}/service-status`, { liveStatus: status }, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || {
+      success: false,
+      message: "Failed to update service status",
+    };
+  }
+};
+
+/**
  * Get admin notifications
  * @returns {Promise} List of admin notifications
  */
@@ -498,6 +520,8 @@ const adminServiceData = {
   getAllUsers,
   deleteUser,
   blockProfessional,
+  unblockProfessional,
+  updateProfessionalServiceStatus,
   deleteProfessional,
   getReports,
   updateReportStatus,
