@@ -567,6 +567,7 @@ const ProfessionalProfile = () => {
             src={profile.coverImage}
             alt="Cover"
             className="absolute inset-0 w-full h-full cursor-pointer hover:opacity-90 transition-opacity"
+            objectFit="object-cover"
             onClick={() => setPreviewImage(profile.coverImage)}
           />
         ) : (
@@ -636,7 +637,8 @@ const ProfessionalProfile = () => {
                 key={profile?.profileImage || 'loading'}
                 src={profile?.profileImage}
                 alt={profile?.firstName || 'Professional'}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full group-hover:scale-105 transition-transform duration-500"
+                objectFit="object-cover"
                 fallbackIcon={UserCircle}
               />
               

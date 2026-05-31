@@ -528,10 +528,11 @@ export default function ExploreJobs() {
                                     <div className="flex items-center gap-4">
                                         <div className="relative w-16 h-16 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden shadow-inner">
                                             {job.profileImage ? (
-                                                <img 
+                                                <OptimizedImage 
                                                     src={job.profileImage.startsWith('http') ? job.profileImage : `/${job.profileImage}`} 
                                                     alt={job.company} 
-                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                                                    className="w-full h-full group-hover:scale-110 transition-transform duration-500"
+                                                    objectFit="object-cover"
                                                 />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center text-2xl bg-slate-100">👨‍💼</div>
@@ -551,6 +552,16 @@ export default function ExploreJobs() {
                                     >
                                         <BookmarkPlus size={18} className={isJobSaved(job.id) ? 'fill-orange-500' : ''} />
                                     </button>
+                                </div>
+
+                                {/* Service Category Image */}
+                                <div className="relative w-full h-40 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden mb-6 shadow-md">
+                                    <OptimizedImage
+                                        src={job.image || DEFAULT_IMAGE}
+                                        alt={job.title}
+                                        className="w-full h-full transition-transform duration-500 group-hover:scale-105"
+                                        objectFit="object-cover"
+                                    />
                                 </div>
 
                                 {/* Verification Status */}

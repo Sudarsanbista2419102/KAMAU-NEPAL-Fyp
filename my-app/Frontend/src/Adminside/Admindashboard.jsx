@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import toast, { Toaster } from 'react-hot-toast';
 import {
   Users,
   Search,
@@ -172,7 +171,6 @@ const AdminDashboard = () => {
   const handleAddCalendarTask = (e) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) {
-      toast.error('Please enter a task title');
       return;
     }
     
@@ -187,17 +185,14 @@ const AdminDashboard = () => {
     
     setCalendarTasks(prev => [...prev, newTask]);
     setNewTaskTitle('');
-    toast.success('Task added successfully!');
   };
 
   const handleToggleCalendarTask = (taskId) => {
     setCalendarTasks(prev => prev.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t));
-    toast.success('Task updated!');
   };
 
   const handleDeleteCalendarTask = (taskId) => {
     setCalendarTasks(prev => prev.filter(t => t.id !== taskId));
-    toast.success('Task deleted!');
   };
 
   useEffect(() => {
@@ -408,8 +403,6 @@ const AdminDashboard = () => {
     doc.text('3. GEOGRAPHIC PRECISION', 15, doc.lastAutoTable.finalY + 15);
     
     const geoData = [
-      ['Latitude', professional.location?.coordinates?.[1] || 'N/A'],
-      ['Longitude', professional.location?.coordinates?.[0] || 'N/A'],
       ['Full Address', professional.formattedAddress || 'N/A']
     ];
 
@@ -440,10 +433,8 @@ const AdminDashboard = () => {
     }
 
     doc.save(`${professional.firstName}_${professional.lastName}_Application.pdf`);
-    toast.success('PDF downloaded successfully!');
     } catch (err) {
       console.error('Failed to generate PDF:', err);
-      toast.error('Failed to download PDF');
     }
   };
 
@@ -456,11 +447,9 @@ const AdminDashboard = () => {
         try {
           const res = await adminService.approveProfessional(id);
           if (res.success) {
-            toast.success('Professional approved successfully!');
             fetchDashboardData();
           }
         } catch (err) {
-          toast.error(err.message || 'Failed to approve professional');
         }
       },
       type: 'success'
@@ -476,7 +465,6 @@ const AdminDashboard = () => {
 
   const confirmRejection = async () => {
     if (!rejectionReason.trim()) {
-      toast.error('Please provide a reason for rejection');
       return;
     }
     
@@ -484,12 +472,10 @@ const AdminDashboard = () => {
       setIsSubmitting(true);
       const res = await adminService.rejectProfessional(selectedProfessional._id, rejectionReason);
       if (res.success) {
-        toast.success('Professional rejected successfully!');
         setShowRejectionModal(false);
         fetchDashboardData();
       }
     } catch (err) {
-      toast.error(err.message || 'Failed to reject professional');
     } finally {
       setIsSubmitting(false);
     }
@@ -527,11 +513,9 @@ const AdminDashboard = () => {
         try {
           const res = await adminService.deleteUser(id);
           if (res.success) {
-            toast.success('User deleted successfully!');
             fetchDashboardData();
           }
         } catch (err) {
-          toast.error(err.message || 'Failed to delete user');
         }
       },
       type: 'danger'
@@ -547,11 +531,9 @@ const AdminDashboard = () => {
         try {
           const res = await adminService.deleteProfessional(id);
           if (res.success) {
-            toast.success('Professional profile deleted successfully!');
             fetchDashboardData();
           }
         } catch (err) {
-          toast.error(err.message || 'Failed to delete professional');
         }
       },
       type: 'danger'
@@ -568,11 +550,9 @@ const AdminDashboard = () => {
         try {
           const res = await adminService.blockProfessional(id, days);
           if (res.success) {
-            toast.success(`Professional blocked for ${days} days!`);
             fetchDashboardData();
           }
         } catch (err) {
-          toast.error(err.message || 'Failed to block professional');
         }
       },
       type: 'warning'
@@ -589,11 +569,9 @@ const AdminDashboard = () => {
         try {
           const res = await adminService.unblockProfessional(id);
           if (res.success) {
-            toast.success('Professional unblocked successfully!');
             fetchDashboardData();
           }
         } catch (err) {
-          toast.error(err.message || 'Failed to unblock professional');
         }
       },
       type: 'success'
@@ -617,7 +595,7 @@ const AdminDashboard = () => {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center relative overflow-hidden">
         <div className="relative flex flex-col items-center gap-6">
           <div className="relative">
-            <div className="w-20 h-20 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin shadow-md"></div>
+            <div className="w-20 h-20 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin"></div>
             <Zap className="w-8 h-8 text-teal-600 animate-pulse absolute top-6 left-6" />
           </div>
           <div className="space-y-1 text-center">
@@ -635,74 +613,8 @@ const AdminDashboard = () => {
         ? 'bg-slate-950 text-slate-100' 
         : 'bg-slate-50 text-slate-900'
     }`}>
-      <Toaster 
-        position="top-right"
-        reverseOrder={false}
-        toastOptions={{
-          duration: 4000,
-          custom: (t) => (
-            <div
-              className={`w-full max-w-md px-6 py-4 rounded-lg shadow-lg border-l-4 flex items-start gap-4 transition-all ${
-                t.type === 'success'
-                  ? 'bg-white border-l-green-500'
-                  : t.type === 'error'
-                  ? 'bg-white border-l-red-500'
-                  : t.type === 'loading'
-                  ? 'bg-white border-l-blue-500'
-                  : 'bg-white border-l-yellow-500'
-              }`}
-            >
-              <div
-                className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg ${
-                  t.type === 'success'
-                    ? 'bg-green-500'
-                    : t.type === 'error'
-                    ? 'bg-red-500'
-                    : t.type === 'loading'
-                    ? 'bg-blue-500'
-                    : 'bg-yellow-500'
-                }`}
-              >
-                {t.type === 'success' && '✓'}
-                {t.type === 'error' && '✕'}
-                {t.type === 'loading' && 'i'}
-                {t.type === 'blank' && '!'}
-              </div>
-              <div className="flex-1 pt-1">
-                <h3 className={`font-bold text-sm ${
-                  t.type === 'success'
-                    ? 'text-gray-800'
-                    : t.type === 'error'
-                    ? 'text-gray-800'
-                    : 'text-gray-800'
-                }`}>
-                  {t.type === 'success' && 'Success'}
-                  {t.type === 'error' && 'Error'}
-                  {t.type === 'loading' && 'Info'}
-                  {t.type === 'blank' && 'Warning'}
-                </h3>
-                <p className="text-xs text-gray-500 mt-1 leading-snug">
-                  {t.message}
-                </p>
-              </div>
-              <button
-                onClick={() => t.dismiss()}
-                className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors pt-1"
-              >
-                ✕
-              </button>
-            </div>
-          ),
-          success: {
-            duration: 4000,
-          },
-          error: {
-            duration: 4000,
-          },
-        }}
-      />
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 backdrop-blur-2xl border-r transform transition-all duration-500 lg:static lg:translate-x-0 shadow-xl ${
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 backdrop-blur-2xl border-r transform transition-all duration-500 lg:static lg:translate-x-0 ${
         darkMode
           ? 'bg-slate-900/80 border-slate-800 translate-x-0'
           : 'bg-white/80 border-slate-100'
@@ -716,7 +628,7 @@ const AdminDashboard = () => {
           <div className="mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 relative group overflow-hidden">
             <div className="absolute top-0 right-0 w-16 h-16 bg-teal-500/5 -mr-8 -mt-8 rounded-full blur-xl"></div>
             <div className="flex items-center gap-3 relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-teal-100">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white font-black text-lg">
                 {adminUser?.username?.charAt(0).toUpperCase() || 'A'}
               </div>
               <div className="overflow-hidden">
@@ -738,11 +650,11 @@ const AdminDashboard = () => {
                   className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all duration-300 group relative ${
                     activeTab === item.id 
                       ? darkMode 
-                        ? 'bg-slate-800 shadow-md border border-slate-700 text-teal-400' 
-                        : 'bg-white shadow-md border border-slate-100 text-teal-600'
+                        ? 'bg-slate-800 border border-slate-700 text-teal-400' 
+                        : 'bg-white border border-slate-100 text-teal-600'
                       : darkMode
-                        ? 'text-slate-400 hover:bg-slate-800 hover:shadow-sm'
-                        : 'text-slate-500 hover:bg-white hover:shadow-sm'
+                        ? 'text-slate-400 hover:bg-slate-800'
+                        : 'text-slate-500 hover:bg-white'
                   }`}
                 >
                   <Icon size={16} className={activeTab === item.id ? 'text-teal-500 border-teal-500' : 'group-hover:text-teal-500 transition-colors'} />
@@ -855,7 +767,7 @@ const AdminDashboard = () => {
                     <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-1">Platform Dashboard</h1>
                     <p className="text-slate-500 font-semibold uppercase tracking-widest text-[9px]">Real-time system health & analytics</p>
                   </div>
-                  <div className="px-4 py-2 bg-white rounded-xl border border-slate-100 shadow-sm flex items-center gap-2">
+                  <div className="px-4 py-2 bg-white rounded-xl border border-slate-100 flex items-center gap-2">
                     <Clock size={14} className="text-orange-500" />
                     <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                   </div>
@@ -874,11 +786,11 @@ const AdminDashboard = () => {
                       <div 
                         key={i} 
                         onClick={() => setActiveTab(stat.tab)}
-                        className="relative bg-white p-5 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 group hover:scale-[1.02] active:scale-95 transition-all cursor-pointer overflow-hidden"
+                        className="relative bg-white p-5 rounded-2xl border border-slate-100 group hover:scale-[1.02] active:scale-95 transition-all cursor-pointer overflow-hidden"
                       >
                         <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 -mr-12 -mt-12 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div className="flex items-center justify-between mb-4 relative z-10">
-                          <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-white shadow-lg ${stat.shadow} group-hover:rotate-6 transition-transform`}>
+                          <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center text-white group-hover:rotate-6 transition-transform`}>
                             <Icon size={18} />
                           </div>
                           <div className="w-9 h-9 rounded-full border border-slate-50 bg-slate-50/50 flex items-center justify-center">
@@ -895,7 +807,7 @@ const AdminDashboard = () => {
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 <div className="xl:col-span-2">
-                  <section className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 h-full">
+                  <section className="bg-white p-6 rounded-3xl border border-slate-100 h-full">
                     <div className="flex justify-between items-center mb-6">
                       <div>
                         <h3 className="text-base font-bold text-slate-900 uppercase tracking-tight flex items-center gap-2">
@@ -926,7 +838,7 @@ const AdminDashboard = () => {
                               >
                                 <td className="py-3.5 pl-4">
                                   <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center shadow-inner">
+                                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center">
                                       {p.profileImage ? (
                                         <img 
                                           src={p.profileImage.startsWith('http') ? p.profileImage : `/${p.profileImage.replace(/\\/g, '/')}`} 
@@ -954,7 +866,7 @@ const AdminDashboard = () => {
                                 </td>
                                 <td className="py-3.5"><StatusBadge status={p.verificationStatus} /></td>
                                 <td className="py-3.5 pr-4 text-right">
-                                  <button onClick={() => handleViewDetails(p)} className="p-2 text-slate-400 hover:text-teal-600 hover:bg-white hover:shadow-md rounded-xl transition-all"><Eye size={16} /></button>
+                                  <button onClick={() => handleViewDetails(p)} className="p-2 text-slate-400 hover:text-teal-600 hover:bg-white rounded-xl transition-all"><Eye size={16} /></button>
                                 </td>
                               </tr>
                             ))
@@ -980,7 +892,7 @@ const AdminDashboard = () => {
                   </div>
                   
                   {/* Search and Filter UI */}
-                  <div className="flex flex-col sm:flex-row gap-3 items-center bg-white p-2 rounded-xl border border-slate-100 shadow-sm w-full md:w-auto">
+                  <div className="flex flex-col sm:flex-row gap-3 items-center bg-white p-2 rounded-xl border border-slate-100 w-full md:w-auto">
                     <div className="relative w-full sm:w-56">
                       <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
                       <input 
@@ -1025,7 +937,7 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 ">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
                       <thead>
@@ -1048,7 +960,7 @@ const AdminDashboard = () => {
                             >
                               <td className="py-3.5 pl-4">
                                 <div className="flex items-center gap-3 text-slate-900">
-                                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center shadow-inner">
+                                  <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 overflow-hidden flex items-center justify-center">
                                     {p.profileImage ? (
                                       <img 
                                         src={p.profileImage.startsWith('http') ? p.profileImage : `/${p.profileImage.replace(/\\/g, '/')}`} 
@@ -1080,14 +992,14 @@ const AdminDashboard = () => {
                                     <div className="flex justify-end gap-2">
                                       <button 
                                         onClick={(e) => { e.stopPropagation(); handleApprove(p._id); }} 
-                                        className="p-2 bg-emerald-500 text-white hover:bg-emerald-600 rounded-xl transition-all shadow-lg shadow-emerald-100 active:scale-95"
+                                        className="p-2 bg-emerald-500 text-white hover:bg-emerald-600 rounded-xl transition-all  active:scale-95"
                                         title="Verify Professional"
                                       >
                                         <CheckCircle size={15} />
                                       </button>
                                       <button 
                                         onClick={(e) => { e.stopPropagation(); handleReject(p._id); }} 
-                                        className="p-2 bg-rose-500 text-white hover:bg-rose-600 rounded-xl transition-all shadow-lg shadow-rose-100 active:scale-95"
+                                        className="p-2 bg-rose-500 text-white hover:bg-rose-600 rounded-xl transition-all  active:scale-95"
                                         title="Decline Profile"
                                       >
                                         <X size={15} />
@@ -1097,18 +1009,18 @@ const AdminDashboard = () => {
                                     <div className="flex justify-end gap-2">
                                       <button 
                                         onClick={(e) => { e.stopPropagation(); handleDownloadPDF(p); }} 
-                                        className="p-2 bg-white text-slate-400 hover:text-orange-500 border border-slate-100 rounded-xl transition-all hover:shadow-md"
+                                        className="p-2 bg-white text-slate-400 hover:text-orange-500 border border-slate-100 rounded-xl transition-all"
                                         title="Download Application"
                                       >
                                         <Download size={15} />
                                       </button>
-                                      <button onClick={() => handleViewDetails(p)} className="p-2 bg-slate-50 text-slate-400 hover:text-teal-600 hover:bg-white hover:shadow-md rounded-xl transition-all">
+                                      <button onClick={() => handleViewDetails(p)} className="p-2 bg-slate-50 text-slate-400 hover:text-teal-600 hover:bg-white rounded-xl transition-all">
                                         <Eye size={15} />
                                       </button>
                                       {p.isBlocked ? (
                                         <button 
                                           onClick={(e) => { e.stopPropagation(); handleUnblockProfessional(p._id); }} 
-                                          className="p-2 bg-green-50 text-green-500 hover:text-green-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
+                                          className="p-2 bg-green-50 text-green-500 hover:text-green-600 hover:bg-white rounded-xl transition-all"
                                           title="Unblock Professional"
                                         >
                                           <CheckCircle2 size={15} />
@@ -1116,7 +1028,7 @@ const AdminDashboard = () => {
                                       ) : (
                                         <button 
                                           onClick={(e) => { e.stopPropagation(); handleBlockProfessional(p._id, 3); }} 
-                                          className="p-2 bg-orange-50 text-orange-500 hover:text-orange-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
+                                          className="p-2 bg-orange-50 text-orange-500 hover:text-orange-600 hover:bg-white rounded-xl transition-all"
                                           title="Block Professional (3 days)"
                                         >
                                           <ShieldAlert size={15} />
@@ -1124,7 +1036,7 @@ const AdminDashboard = () => {
                                       )}
                                       <button 
                                         onClick={(e) => { e.stopPropagation(); handleDeleteProfessional(p._id); }} 
-                                        className="p-2 bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
+                                        className="p-2 bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-white rounded-xl transition-all"
                                         title="Delete Professional Profile"
                                       >
                                         <Trash2 size={15} />
@@ -1153,7 +1065,7 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 ">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
                       <thead>
@@ -1176,7 +1088,7 @@ const AdminDashboard = () => {
                             >
                               <td className="py-3.5 pl-4">
                                 <div className="flex items-center gap-3 text-slate-900">
-                                  <div className="w-10 min-w-[2.5rem] h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-600 shadow-inner">
+                                  <div className="w-10 min-w-[2.5rem] h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-600">
                                     <Shield size={16} />
                                   </div>
                                   <div>
@@ -1201,7 +1113,7 @@ const AdminDashboard = () => {
                               <td className="py-3.5 pr-4 text-right">
                                 <button 
                                   onClick={() => handleDeleteUser(u._id)} 
-                                  className="p-2 bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-white hover:shadow-md rounded-xl transition-all"
+                                  className="p-2 bg-rose-50 text-rose-400 hover:text-rose-600 hover:bg-white rounded-xl transition-all"
                                   title="Delete User Account"
                                 >
                                   <Trash2 size={15} />
@@ -1233,7 +1145,7 @@ const AdminDashboard = () => {
                     <p className="text-slate-500 font-medium uppercase tracking-wider text-[9px]">Real-time growth and distribution metrics</p>
                   </div>
                   <div className="flex gap-3">
-                    <button onClick={() => fetchDashboardData()} className="px-4 py-2 bg-white border border-slate-100 text-teal-600 text-[9px] font-semibold uppercase tracking-wider rounded-xl shadow-sm hover:shadow-md transition-all flex items-center gap-1.5">
+                    <button onClick={() => fetchDashboardData()} className="px-4 py-2 bg-white border border-slate-100 text-teal-600 text-[9px] font-semibold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5">
                        <Activity size={12} /> Refresh Data
                     </button>
                   </div>
@@ -1241,7 +1153,7 @@ const AdminDashboard = () => {
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Growth Chart */}
-                  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 min-h-[350px]">
+                  <div className="bg-white p-6 rounded-3xl border border-slate-100  min-h-[350px]">
                     <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
                        <TrendingUp size={16} className="text-teal-500" /> Platform Growth
                     </h3>
@@ -1267,7 +1179,7 @@ const AdminDashboard = () => {
                   </div>
 
                   {/* Category Distribution */}
-                  <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 min-h-[350px]">
+                  <div className="bg-white p-6 rounded-3xl border border-slate-100  min-h-[350px]">
                     <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
                        <Orbit size={16} className="text-orange-500" /> Service Categories
                     </h3>
@@ -1297,7 +1209,7 @@ const AdminDashboard = () => {
                   </div>
 
                   {/* Status Metrics */}
-                  <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                  <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 ">
                     <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
                        <CheckCircle2 size={16} className="text-blue-500" /> Verification Status Breakdown
                     </h3>
@@ -1318,7 +1230,7 @@ const AdminDashboard = () => {
                   </div>
 
                   {/* Live Professional Tracking */}
-                  <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                  <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 ">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                          <Activity size={16} className="text-emerald-500" /> Live Professional Tracking
@@ -1381,7 +1293,7 @@ const AdminDashboard = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Revenue Timeline */}
-                      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                      <div className="bg-white p-6 rounded-3xl border border-slate-100 ">
                         <div className="flex justify-between items-start mb-6">
                           <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                             <TrendingUp size={16} className="text-emerald-500" /> Revenue (Last 7 Days)
@@ -1408,7 +1320,7 @@ const AdminDashboard = () => {
                       </div>
 
                       {/* Revenue by Service */}
-                      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                      <div className="bg-white p-6 rounded-3xl border border-slate-100 ">
                         <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-6 flex items-center gap-2">
                           <DollarSign size={16} className="text-blue-500" /> Revenue by Service
                         </h3>
@@ -1450,7 +1362,7 @@ const AdminDashboard = () => {
                          onClick={() => setReportStatusFilter(status)}
                          className={`px-4 py-2 rounded-lg text-[9px] font-semibold uppercase tracking-wider transition-all ${
                            reportStatusFilter === status 
-                             ? 'bg-white text-slate-900 shadow-md shadow-slate-200' 
+                             ? 'bg-white text-slate-900' 
                              : 'text-slate-400 hover:text-slate-600'
                          }`}
                        >
@@ -1462,21 +1374,21 @@ const AdminDashboard = () => {
 
                 {/* Report Tracking Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/20">
+                  <div className="bg-white p-5 rounded-2xl border border-slate-100">
                     <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Total Reports Received</p>
                     <h3 className="text-2xl font-bold text-slate-900">{reports.length}</h3>
                   </div>
-                  <div className="bg-orange-50 p-5 rounded-2xl border border-orange-100 shadow-xl shadow-orange-100/20">
+                  <div className="bg-orange-50 p-5 rounded-2xl border border-orange-100">
                     <p className="text-[9px] font-semibold text-orange-400 uppercase tracking-wider mb-1">Pending Investigation</p>
                     <h3 className="text-2xl font-bold text-orange-600">{reports.filter(r => r.status === 'Pending').length}</h3>
                   </div>
-                  <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-xl shadow-emerald-100/20">
+                  <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100">
                     <p className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wider mb-1">Successfully Resolved</p>
                     <h3 className="text-2xl font-bold text-emerald-600">{reports.filter(r => r.status === 'Resolved').length}</h3>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
+                <div className="bg-white rounded-3xl border border-slate-100  overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
                       <thead>
@@ -1538,7 +1450,7 @@ const AdminDashboard = () => {
                                     setAdminReportNote(report.adminNotes || '');
                                     setShowReportModal(true);
                                   }}
-                                  className={`px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider rounded-lg transition-all shadow-md ${
+                                  className={`px-3 py-1.5 text-[9px] font-semibold uppercase tracking-wider rounded-lg transition-all ${
                                     report.status === 'Pending' ? 'bg-slate-900 text-white hover:bg-teal-600' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
                                   }`}
                                 >
@@ -1560,7 +1472,6 @@ const AdminDashboard = () => {
             const handleAddCategory = async (e) => {
               e.preventDefault();
               if (!newCategoryLabel.trim() || !newCategoryValue.trim()) {
-                toast.error('Both label and value are required');
                 return;
               }
               try {
@@ -1581,14 +1492,11 @@ const AdminDashboard = () => {
                   // Reset file input
                   const fileInput = document.getElementById('cat-image-input');
                   if (fileInput) fileInput.value = '';
-                  toast.success('Category added successfully!');
                   fetchDashboardData();
                 } else {
-                  toast.error(data.message || 'Failed to add category');
                 }
               } catch (err) {
                 console.error(err);
-                toast.error('Error adding category');
               }
             };
 
@@ -1602,13 +1510,10 @@ const AdminDashboard = () => {
                     const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
                     const data = await res.json();
                     if (data.success) {
-                      toast.success('Category deleted successfully!');
                       fetchDashboardData();
-                    } else {
-                      toast.error(data.message || 'Failed to delete category');
                     }
                   } catch (err) {
-                    toast.error('Error deleting category');
+                    console.error('Delete category error:', err);
                   }
                 },
                 type: 'danger'
@@ -1628,7 +1533,7 @@ const AdminDashboard = () => {
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Add Category Form */}
                     <div className="lg:col-span-1">
-                      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 sticky top-24">
+                      <div className="bg-white p-6 rounded-3xl border border-slate-100  sticky top-24">
                         <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-5 flex items-center gap-2">
                           <Plus size={16} className="text-teal-500" /> Add New Category
                         </h3>
@@ -1703,7 +1608,7 @@ const AdminDashboard = () => {
 
                           <button
                             type="submit"
-                            className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg shadow-teal-600/20 hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
+                            className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
                           >
                             <Plus size={16} /> Add Category
                           </button>
@@ -1713,7 +1618,7 @@ const AdminDashboard = () => {
 
                     {/* Categories List */}
                     <div className="lg:col-span-2">
-                      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                      <div className="bg-white p-6 rounded-3xl border border-slate-100 ">
                         <div className="flex items-center justify-between mb-5">
                           <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                             <Compass size={16} className="text-orange-500" /> Active Categories
@@ -1738,7 +1643,7 @@ const AdminDashboard = () => {
                               return (
                                 <div
                                   key={cat._id}
-                                  className="group relative rounded-2xl overflow-hidden border border-slate-100 hover:border-teal-200 shadow-sm hover:shadow-md transition-all"
+                                  className="group relative rounded-2xl overflow-hidden border border-slate-100 hover:border-teal-200 transition-all"
                                 >
                                   {imgSrc ? (
                                     <div className="h-28 overflow-hidden">
@@ -1764,14 +1669,14 @@ const AdminDashboard = () => {
                                           setEditCategoryLabel(cat.label);
                                           setEditCategoryImage(null);
                                         }}
-                                        className="p-1.5 bg-teal-500/90 hover:bg-teal-600 text-white rounded-lg transition-all opacity-0 group-hover:opacity-100 shadow-md"
+                                        className="p-1.5 bg-teal-500/90 hover:bg-teal-600 text-white rounded-lg transition-all opacity-0 group-hover:opacity-100"
                                         title="Edit Category"
                                       >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                       </button>
                                       <button
                                         onClick={() => handleDeleteCategory(cat._id)}
-                                        className="p-1.5 bg-rose-500/90 hover:bg-rose-600 text-white rounded-lg transition-all opacity-0 group-hover:opacity-100 shadow-md"
+                                        className="p-1.5 bg-rose-500/90 hover:bg-rose-600 text-white rounded-lg transition-all opacity-0 group-hover:opacity-100"
                                         title="Delete Category"
                                       >
                                         <Trash2 size={13} />
@@ -1792,7 +1697,7 @@ const AdminDashboard = () => {
                 {/* Edit Category Form (modal) */}
                 {editCategoryId && (
                   <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/30">
-                    <div className="bg-white p-6 rounded-xl shadow-lg max-w-md w-full">
+                    <div className="bg-white p-6 rounded-xl max-w-md w-full">
                       <h3 className="text-lg font-bold mb-4">Edit Category</h3>
                       <div className="space-y-4">
                         <input
@@ -1829,7 +1734,6 @@ const AdminDashboard = () => {
                               fetchDashboardData();
                             } catch (e) {
                               console.error("Edit category error:", e);
-                              alert(`Failed to edit category: ${e.message || e}`);
                             }
                           }}
                           className="px-4 py-2 bg-teal-600 text-white rounded"
@@ -1904,7 +1808,7 @@ const AdminDashboard = () => {
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Month Calendar Grid */}
                     <div className="lg:col-span-2 space-y-4">
-                      <div className="flex justify-between items-center bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-md">
+                      <div className="flex justify-between items-center bg-white px-5 py-3 rounded-2xl border border-slate-100">
                         <h2 className="text-base font-bold text-slate-900 tracking-tight select-none">
                           {calendarDate.toLocaleString('default', { month: 'long' })} {calendarYear}
                         </h2>
@@ -1933,7 +1837,7 @@ const AdminDashboard = () => {
                         </div>
                       </div>
 
-                      <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40">
+                      <div className="bg-white p-5 rounded-2xl border border-slate-100 ">
                         {/* Day Names Header */}
                         <div className="grid grid-cols-7 gap-1.5 mb-2 text-center text-slate-400 text-[9px] font-semibold uppercase tracking-wider">
                           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
@@ -1955,7 +1859,7 @@ const AdminDashboard = () => {
                                 onClick={() => setSelectedCalendarDate(cell.date)}
                                 className={`aspect-square rounded-xl p-1.5 flex flex-col justify-between border cursor-pointer transition-all active:scale-95 relative group ${
                                   !cell.isCurrentMonth ? 'bg-slate-50/10 border-transparent text-slate-300' :
-                                  isSelected ? 'bg-teal-50 border-teal-500/30 ring-2 ring-teal-500/30 shadow-md shadow-teal-50/50 text-teal-600' :
+                                  isSelected ? 'bg-teal-50 border-teal-500/30 ring-2 ring-teal-500/30 text-teal-600' :
                                   isToday ? 'bg-orange-50/50 border-orange-500/30 text-orange-600' :
                                   'bg-slate-50/40 border-slate-100 text-slate-700 hover:bg-slate-50 hover:border-slate-200'
                                 }`}
@@ -1994,7 +1898,7 @@ const AdminDashboard = () => {
 
                     {/* Task Panel & Reminders */}
                     <div className="space-y-4">
-                      <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/40 space-y-4">
+                      <div className="bg-white p-5 rounded-2xl border border-slate-100  space-y-4">
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                           <div>
                             <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Administrative Schedule</p>
@@ -2198,14 +2102,10 @@ const AdminDashboard = () => {
                     <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Formatted Address</p>
                     <p className="text-sm font-medium text-slate-700">{selectedProfessional.formattedAddress || selectedProfessional.serviceArea}</p>
                   </div>
-                  <div className="grid grid-cols-2">
-                    <div className="p-4 border-r border-slate-100">
-                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Latitude</p>
-                      <p className="text-sm font-mono font-bold text-teal-600">{selectedProfessional.location?.coordinates?.[1] || 'N/A'}</p>
-                    </div>
+                  <div className="grid grid-cols-1">
                     <div className="p-4">
-                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Longitude</p>
-                      <p className="text-sm font-mono font-bold text-teal-600">{selectedProfessional.location?.coordinates?.[0] || 'N/A'}</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1">Address</p>
+                      <p className="text-sm font-mono font-bold text-teal-600">{selectedProfessional.formattedAddress || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -2296,7 +2196,7 @@ const AdminDashboard = () => {
                               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button 
                                   onClick={() => setPreviewDocId(null)}
-                                  className="p-2 bg-white/90 backdrop-blur shadow-lg rounded-xl text-rose-500 hover:bg-white transition-all"
+                                  className="p-2 bg-white/90 backdrop-blur rounded-xl text-rose-500 hover:bg-white transition-all"
                                 >
                                   <X size={18} />
                                 </button>
@@ -2363,7 +2263,7 @@ const AdminDashboard = () => {
                 <button 
                   onClick={confirmRejection}
                   disabled={isSubmitting || !rejectionReason.trim()}
-                  className="w-full py-4 bg-rose-500 text-white rounded-[20px] font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-rose-100 hover:bg-rose-600 disabled:opacity-50 transition-all"
+                  className="w-full py-4 bg-rose-500 text-white rounded-[20px] font-black text-[10px] uppercase tracking-[0.2em]  hover:bg-rose-600 disabled:opacity-50 transition-all"
                 >
                   {isSubmitting ? 'Processing...' : 'Confirm Rejection'}
                 </button>
@@ -2563,9 +2463,11 @@ const AdminDashboard = () => {
                         await adminService.updateReportStatus(selectedReport._id, { status: 'Resolved', adminNotes: adminReportNote });
                         setShowReportModal(false);
                         fetchDashboardData();
-                      } catch (err) { alert('Action failed'); }
+                      } catch (err) { 
+                        console.error('Action failed:', err);
+                      }
                     }}
-                    className="flex-1 min-w-[140px] py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100"
+                    className="flex-1 min-w-[140px] py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all "
                   >
                     Mark as Resolved
                   </button>
@@ -2582,10 +2484,12 @@ const AdminDashboard = () => {
                             });
                             setShowReportModal(false);
                             fetchDashboardData();
-                          } catch (err) { alert('Blocking failed'); }
+                          } catch (err) { 
+                            console.error('Blocking failed:', err);
+                          }
                         }
                       }}
-                      className="flex-1 min-w-[140px] py-4 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-100"
+                      className="flex-1 min-w-[140px] py-4 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-700 transition-all "
                     >
                       Block (3 Days)
                     </button>
@@ -2597,9 +2501,11 @@ const AdminDashboard = () => {
                         await adminService.updateReportStatus(selectedReport._id, { status: 'Dismissed', adminNotes: adminReportNote });
                         setShowReportModal(false);
                         fetchDashboardData();
-                      } catch (err) { alert('Action failed'); }
+                      } catch (err) { 
+                        console.error('Action failed:', err);
+                      }
                     }}
-                    className="flex-1 min-w-[140px] py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-700 transition-all shadow-lg"
+                    className="flex-1 min-w-[140px] py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-700 transition-all"
                   >
                     Dismiss Report
                   </button>

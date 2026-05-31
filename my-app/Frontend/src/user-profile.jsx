@@ -738,6 +738,7 @@ export default function UserProfile() {
                             src={profileImage} 
                             alt="Profile" 
                             className="w-full h-full" 
+                            objectFit="object-cover"
                             fallbackIcon={UserCircle}
                           />
                         ) : (
