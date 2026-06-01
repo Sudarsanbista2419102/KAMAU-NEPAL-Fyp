@@ -1,5 +1,5 @@
-// Use environment variable for API base URL, fallback to relative path for development
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+// Use environment variable for API base URL, fallback to production URL
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://kamau-nepal-fyp.onrender.com';
 const API_URL = `${API_BASE_URL}/api/notifications`;
 
 const notificationService = {
