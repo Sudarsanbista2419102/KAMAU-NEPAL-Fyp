@@ -1,4 +1,6 @@
-const API_URL = '/api/notifications';
+// Use environment variable for API base URL, fallback to relative path for development
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+const API_URL = `${API_BASE_URL}/api/notifications`;
 
 const notificationService = {
   getNotifications: async () => {
