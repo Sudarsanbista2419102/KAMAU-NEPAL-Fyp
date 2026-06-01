@@ -12,7 +12,7 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
  */
 export const createBooking = async (bookingData) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/bookings`, {
+    const response = await fetch(`${API_BASE_URL}/api/bookings`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -39,7 +39,7 @@ export const createBooking = async (bookingData) => {
  */
 export const getUserBookings = async (userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/bookings/user/${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/bookings/user/${userId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -65,7 +65,7 @@ export const getUserBookings = async (userId) => {
  */
 export const getBookingById = async (bookingId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/bookings/${bookingId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -91,7 +91,7 @@ export const getBookingById = async (bookingId) => {
  */
 export const updateBookingStatus = async (bookingId, status, notes = "") => {
   try {
-    const response = await fetch(`${API_BASE_URL}/bookings/${bookingId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -118,7 +118,7 @@ export const updateBookingStatus = async (bookingId, status, notes = "") => {
  */
 export const deleteBooking = async (bookingId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/bookings/${bookingId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -144,7 +144,7 @@ export const deleteBooking = async (bookingId) => {
  */
 export const getBookingStats = async (userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/bookings/stats/${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/bookings/stats/${userId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -170,7 +170,7 @@ export const getBookingStats = async (userId) => {
  */
 export const updatePaymentStatus = async (bookingId, paymentStatus, paymentMethod = "None") => {
   try {
-    const response = await fetch(`${API_BASE_URL}/bookings/${bookingId}/payment`, {
+    const response = await fetch(`${API_BASE_URL}/api/bookings/${bookingId}/payment`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -197,7 +197,7 @@ export const updatePaymentStatus = async (bookingId, paymentStatus, paymentMetho
  */
 export const checkUserBookingStatus = async (userId, professionalId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/bookings/user/${userId}/professional/${professionalId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/bookings/user/${userId}/professional/${professionalId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
