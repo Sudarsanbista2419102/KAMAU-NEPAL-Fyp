@@ -78,7 +78,7 @@ const Login = () => {
       });
 
       if (err.message === "Network Error" || !err.response) {
-        setMessage("Cannot connect to server. Make sure backend is running on port 5001");
+        setMessage("Cannot connect to server. Please check your internet connection and try again.");
       } else if (err.response?.status === 404) {
         setMessage(t('user_not_found') || "User not found. Please sign up first.");
       } else if (err.response?.status === 401) {
@@ -98,7 +98,7 @@ const Login = () => {
       try {
         setLoading(true);
         console.log('Google login success, exchanging token...');
-        const res = await axios.post('/api/users/google-login', {
+        const res = await api.post('/api/users/google-login', {
           token: tokenResponse.access_token,
         });
 

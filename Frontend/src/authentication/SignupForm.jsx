@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, ArrowRight } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/apiInstance'; // Use centralized api instance
 import { useGoogleLogin } from '@react-oauth/google';
 import { useTranslation } from '../utils/LanguageContext';
 import toast from 'react-hot-toast';
@@ -115,7 +115,7 @@ const SignupForm = () => {
       };
 
       // Send POST request to backend
-      const response = await axios.post(
+      const response = await api.post(
         '/api/users/signup',
         payload
       );
@@ -143,7 +143,7 @@ const SignupForm = () => {
     onSuccess: async (tokenResponse) => {
       try {
         console.log('Google login success, exchanging token...');
-        const res = await axios.post('/api/users/google-login', {
+        const res = await api.post('/api/users/google-login', {
           token: tokenResponse.access_token,
         });
 
