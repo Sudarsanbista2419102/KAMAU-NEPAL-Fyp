@@ -9,8 +9,8 @@ import {
     MoreVertical,
     ChevronLeft,
     X,
-    Phone,
-    Video,
+    // Phone, // Unused - can be added when call feature is implemented
+    // Video, // Unused - can be added when call feature is implemented
     Smile,
     Paperclip,
     Check,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, User, MapPin, DollarSign, Phone, Bio, Briefcase, Clock, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { X, Save, User, MapPin, DollarSign, Phone, Briefcase, Clock, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 

@@ -5,7 +5,7 @@
 
 // Use environment variable for API base URL, fallback to relative path for development
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
-const API_URL = `${API_BASE_URL}/api`;
+// const API_URL = `${API_BASE_URL}/api`; // Unused - using direct paths in functions
 
 /**
  * Create a new booking

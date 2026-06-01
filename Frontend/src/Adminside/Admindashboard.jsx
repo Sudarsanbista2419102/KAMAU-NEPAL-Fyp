@@ -29,8 +29,8 @@ import {
   ChevronRight,
   Plus,
   Calendar,
-  Moon,
-  Sun,
+  // Moon, // Unused - can be added when dark mode toggle is implemented
+  // Sun, // Unused - can be added when dark mode toggle is implemented
   Lightbulb
 } from 'lucide-react';
 

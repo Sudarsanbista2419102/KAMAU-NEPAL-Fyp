@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Navigation, MapPin, User, Phone, ExternalLink, Info, Activity, Plus, Minus, Route } from 'lucide-react';
+import { Navigation, MapPin, User, ExternalLink, Info, Activity, Plus, Minus, Route } from 'lucide-react'; // Phone removed - unused
 
 // Polyline decoding helper for OSRM
 const decodePolyline = (str, precision) => {
