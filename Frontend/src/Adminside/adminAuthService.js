@@ -1,23 +1,6 @@
-import axios from "axios";
+import api from '../services/apiInstance';
 
-const API_URL = "/api/auth";
-
-// Create axios instance
-const axiosInstance = axios.create({
-  baseURL: API_URL
-});
-
-// Add token to requests
-axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+const API_URL = '/api/auth';
 
 /**
  * Admin Login
@@ -27,7 +10,7 @@ axiosInstance.interceptors.request.use(
  */
 export const adminLogin = async (username, password) => {
   try {
-    const response = await axios.post(`${API_URL}/admin/login`, {
+    const response = await api.post(`${API_URL}/admin/login`, {
       username,
       password
     });
@@ -53,7 +36,7 @@ export const adminLogin = async (username, password) => {
  */
 export const verifyAdminToken = async () => {
   try {
-    const response = await axiosInstance.post('/admin/verify');
+    const response = await api.post(`${API_URL}/admin/verify`);
     return response.data;
   } catch (error) {
     // Clear stored data if token is invalid
@@ -73,7 +56,7 @@ export const verifyAdminToken = async () => {
  */
 export const adminLogout = async () => {
   try {
-    const response = await axiosInstance.post('/admin/logout');
+    const response = await api.post(`${API_URL}/admin/logout`);
 
     // Clear stored data
     localStorage.removeItem('adminToken');
@@ -94,7 +77,7 @@ export const adminLogout = async () => {
  */
 export const getAdminProfile = async () => {
   try {
-    const response = await axiosInstance.get('/admin/profile');
+    const response = await api.get(`${API_URL}/admin/profile`);
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -111,7 +94,7 @@ export const getAdminProfile = async () => {
  */
 export const updateAdminProfile = async (fullName) => {
   try {
-    const response = await axiosInstance.put('/admin/profile', { fullName });
+    const response = await api.put(`${API_URL}/admin/profile`, { fullName });
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -129,7 +112,7 @@ export const updateAdminProfile = async (fullName) => {
  */
 export const changePassword = async (oldPassword, newPassword) => {
   try {
-    const response = await axiosInstance.post('/admin/change-password', {
+    const response = await api.post(`${API_URL}/admin/change-password`, {
       oldPassword,
       newPassword
     });

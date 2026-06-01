@@ -1,24 +1,6 @@
-import axios from "axios";
+import api from '../services/apiInstance';
 
-const API_URL = "/api/admin";
-
-// Create axios instance
-const axiosInstance = axios.create({
-  baseURL: API_URL,
-});
-
-// Add token to requests
-axiosInstance.interceptors.request.use(
-  (config) => {
-    // Check for adminToken first, fallback to standard token
-    const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+const API_URL = '/api/admin';
 
 /**
  * Get dashboard statistics
@@ -26,7 +8,7 @@ axiosInstance.interceptors.request.use(
  */
 export const getDashboardStats = async () => {
   try {
-    const response = await axiosInstance.get('/dashboard/stats');
+    const response = await api.get(`${API_URL}/dashboard/stats`);
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -42,7 +24,7 @@ export const getDashboardStats = async () => {
  */
 export const getAnalyticsData = async () => {
   try {
-    const response = await axiosInstance.get('/dashboard/analytics');
+    const response = await api.get(`${API_URL}/dashboard/analytics`);
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -59,7 +41,7 @@ export const getAnalyticsData = async () => {
  */
 export const getRecentApplications = async (params = {}) => {
   try {
-    const response = await axiosInstance.get('/dashboard/recent', { params });
+    const response = await api.get(`${API_URL}/dashboard/recent`, { params });
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -76,7 +58,7 @@ export const getRecentApplications = async (params = {}) => {
  */
 export const getAllProfessionalsForAdmin = async (params = {}) => {
   try {
-    const response = await axiosInstance.get('/professionals', { params });
+    const response = await api.get(`${API_URL}/professionals`, { params });
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -93,7 +75,7 @@ export const getAllProfessionalsForAdmin = async (params = {}) => {
  */
 export const searchProfessionals = async (params = {}) => {
   try {
-    const response = await axiosInstance.get('/professionals/search', { params });
+    const response = await api.get(`${API_URL}/professionals/search`, { params });
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -110,7 +92,7 @@ export const searchProfessionals = async (params = {}) => {
  */
 export const getPendingApplications = async (params = {}) => {
   try {
-    const response = await axiosInstance.get('/professionals/pending', { params });
+    const response = await api.get(`${API_URL}/professionals/pending`, { params });
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -127,7 +109,7 @@ export const getPendingApplications = async (params = {}) => {
  */
 export const getApplicationDetails = async (id) => {
   try {
-    const response = await axiosInstance.get(`/professionals/${id}`);
+    const response = await api.get(`${API_URL}/professionals/${id}`);
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -144,7 +126,7 @@ export const getApplicationDetails = async (id) => {
  */
 export const approveProfessional = async (id) => {
   try {
-    const response = await axiosInstance.patch(`/applications/${id}/approve`);
+    const response = await api.patch(`${API_URL}/applications/${id}/approve`);
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -162,7 +144,7 @@ export const approveProfessional = async (id) => {
  */
 export const rejectProfessional = async (id, rejectionReason) => {
   try {
-    const response = await axiosInstance.patch(`/applications/${id}/reject`, {
+    const response = await api.patch(`${API_URL}/applications/${id}/reject`, {
       rejectionReason,
     });
     return response.data;
@@ -180,7 +162,7 @@ export const rejectProfessional = async (id, rejectionReason) => {
  */
 export const getCategoryDistribution = async () => {
   try {
-    const response = await axiosInstance.get('/analytics/categories');
+    const response = await api.get(`${API_URL}/analytics/categories`);
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -201,10 +183,9 @@ export const createCategory = async (value, label, imageFile) => {
     if (imageFile) {
       formData.append('image', imageFile);
     }
-    const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
-    const response = await axios.post('/api/categories', formData, {
+    const response = await api.post('/api/categories', formData, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
       },
     });
     return response.data;
@@ -225,10 +206,9 @@ export const editCategory = async (id, value, label, imageFile) => {
     if (value) formData.append('value', value);
     if (label) formData.append('label', label);
     if (imageFile) formData.append('image', imageFile);
-    const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
-    const response = await axios.put(`/api/categories/${id}`, formData, {
+    const response = await api.put(`/api/categories/${id}`, formData, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
       },
     });
     return response.data;
@@ -246,7 +226,7 @@ export const editCategory = async (id, value, label, imageFile) => {
  */
 export const getStatusDistribution = async () => {
   try {
-    const response = await axiosInstance.get('/analytics/status');
+    const response = await api.get(`${API_URL}/analytics/status`);
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -262,7 +242,7 @@ export const getStatusDistribution = async () => {
  */
 export const getRevenueAnalytics = async () => {
   try {
-    const response = await axiosInstance.get('/analytics/revenue');
+    const response = await api.get(`${API_URL}/analytics/revenue`);
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -279,7 +259,7 @@ export const getRevenueAnalytics = async () => {
  */
 export const exportData = async (params = {}) => {
   try {
-    const response = await axiosInstance.get('/export', { params });
+    const response = await api.get(`${API_URL}/export`, { params });
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -296,7 +276,7 @@ export const exportData = async (params = {}) => {
  */
 export const broadcastNotification = async (payload) => {
   try {
-    const response = await axiosInstance.post('/broadcast', payload);
+    const response = await api.post(`${API_URL}/broadcast`, payload);
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -313,7 +293,7 @@ export const broadcastNotification = async (payload) => {
  */
 export const getAllUsers = async (params = {}) => {
   try {
-    const response = await axiosInstance.get('/users', { params });
+    const response = await api.get(`${API_URL}/users`, { params });
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -330,7 +310,7 @@ export const getAllUsers = async (params = {}) => {
  */
 export const deleteUser = async (id) => {
   try {
-    const response = await axiosInstance.delete(`/users/${id}`);
+    const response = await api.delete(`${API_URL}/users/${id}`);
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -341,15 +321,13 @@ export const deleteUser = async (id) => {
 };
 
 /**
- * Block a professional for a specific number of days
-/**
  * Delete a professional profile
  * @param {String} id - Professional MongoDB ID
  * @returns {Promise} Success message
  */
 export const deleteProfessional = async (id) => {
   try {
-    const response = await axiosInstance.delete(`/professionals/${id}`);
+    const response = await api.delete(`${API_URL}/professionals/${id}`);
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -365,11 +343,7 @@ export const deleteProfessional = async (id) => {
  */
 export const getReports = async () => {
   try {
-    const response = await axios.get('/api/reports/all', {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`,
-      },
-    });
+    const response = await api.get('/api/reports/all');
     return { success: true, data: response.data };
   } catch (error) {
     throw error.response?.data || {
@@ -387,11 +361,7 @@ export const getReports = async () => {
  */
 export const updateReportStatus = async (id, data) => {
   try {
-    const response = await axios.patch(`/api/reports/${id}/status`, data, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`,
-      },
-    });
+    const response = await api.patch(`/api/reports/${id}/status`, data);
     return { success: true, data: response.data };
   } catch (error) {
     throw error.response?.data || {
@@ -409,12 +379,7 @@ export const updateReportStatus = async (id, data) => {
  */
 export const blockProfessional = async (id, days) => {
   try {
-    // Use full URL to bypass proxy issues
-    const response = await axios.patch(`http://localhost:5001/api/admin/professionals/${id}/block`, { days }, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`
-      }
-    });
+    const response = await api.patch(`${API_URL}/professionals/${id}/block`, { days });
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -426,12 +391,7 @@ export const blockProfessional = async (id, days) => {
 
 export const unblockProfessional = async (id) => {
   try {
-    // Use full URL to bypass proxy issues
-    const response = await axios.patch(`http://localhost:5001/api/admin/professionals/${id}/unblock`, {}, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`
-      }
-    });
+    const response = await api.patch(`${API_URL}/professionals/${id}/unblock`, {});
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -449,11 +409,7 @@ export const unblockProfessional = async (id) => {
  */
 export const updateProfessionalServiceStatus = async (id, status) => {
   try {
-    const response = await axios.patch(`http://localhost:5001/api/admin/professionals/${id}/service-status`, { liveStatus: status }, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('adminToken') || localStorage.getItem('token')}`
-      }
-    });
+    const response = await api.patch(`${API_URL}/professionals/${id}/service-status`, { liveStatus: status });
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -469,7 +425,7 @@ export const updateProfessionalServiceStatus = async (id, status) => {
  */
 export const getAdminNotifications = async () => {
   try {
-    const response = await axiosInstance.get('/notifications');
+    const response = await api.get(`${API_URL}/notifications`);
     return response.data;
   } catch (error) {
     throw error.response?.data || {
@@ -486,7 +442,7 @@ export const getAdminNotifications = async () => {
  */
 export const markNotificationAsRead = async (id) => {
   try {
-    const response = await axiosInstance.patch(`/notifications/${id}/read`);
+    const response = await api.patch(`${API_URL}/notifications/${id}/read`);
     return response.data;
   } catch (error) {
     throw error.response?.data || {
