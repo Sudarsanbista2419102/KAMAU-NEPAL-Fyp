@@ -797,9 +797,21 @@ export const getAllUsers = async (req, res) => {
 
     const total = await UserModel.countDocuments(query);
 
+    // Enrich users with their professional data
+    const enrichedUsers = await Promise.all(users.map(async (user) => {
+      const professional = await ProfessionalModel.findOne({ userId: user._id });
+      return {
+        ...user.toObject(),
+        isProfessional: !!professional,
+        professionalStatus: professional?.verificationStatus || null,
+        professionalId: professional?._id || null,
+        serviceCategory: professional?.serviceCategory || null
+      };
+    }));
+
     return res.status(200).json({
       success: true,
-      data: users,
+      data: enrichedUsers,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
