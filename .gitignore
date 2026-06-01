@@ -12,9 +12,6 @@ node_modules
 # production
 /build
 
-# uploads
-uploads/
-Backend/uploads/
 
 # misc
 .DS_Store
