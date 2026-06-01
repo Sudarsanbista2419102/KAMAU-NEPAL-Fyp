@@ -6,7 +6,7 @@ import {
   Heart, Zap, ShieldCheck, ArrowRight, UserCircle
 } from 'lucide-react';
 import Logo from '../Logo';
-import axios from 'axios';
+import api from '../services/apiInstance';
 import Button from '../components/Button';
 import OptimizedImage from '../components/OptimizedImage';
 import { useTranslation } from '../utils/LanguageContext';
@@ -45,7 +45,7 @@ const HomePage = () => {
     if (token) {
       const fetchStatus = async () => {
         try {
-          const response = await axios.get('/api/professionals/me', {
+          const response = await api.get('/api/professionals/me', {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (response.data.success) {
@@ -76,7 +76,7 @@ const HomePage = () => {
     const fetchProfessionals = async () => {
       try {
         setLoadingProfessionals(true);
-        const response = await axios.get('/api/professionals/', {
+        const response = await api.get('/api/professionals/', {
           params: {
             isVerified: true,
             limit: 12
@@ -146,8 +146,8 @@ const HomePage = () => {
       try {
         setLoadingCategories(true);
         const [categoriesRes, activeCategoriesRes] = await Promise.all([
-          axios.get('/api/categories'),
-          axios.get('/api/professionals/categories')
+          api.get('/api/categories'),
+          api.get('/api/professionals/categories')
         ]);
 
         if (categoriesRes.data.success && activeCategoriesRes.data.success) {
