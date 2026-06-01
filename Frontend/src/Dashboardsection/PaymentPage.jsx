@@ -21,8 +21,9 @@ import api from '../services/apiInstance';
 import toast from 'react-hot-toast';
 
 
-const KHALTI_INIT_URL = `/api/payments/khalti/initiate`;
-const ESEWA_INIT_URL = `/api/payments/esewa/initiate`;
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+const KHALTI_INIT_URL = `${API_BASE_URL}/api/payments/khalti/initiate`;
+const ESEWA_INIT_URL = `${API_BASE_URL}/api/payments/esewa/initiate`;
 const ESEWA_FORM_URL = "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
 
 /**

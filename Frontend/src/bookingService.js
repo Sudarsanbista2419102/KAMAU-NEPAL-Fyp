@@ -3,7 +3,9 @@
  * Handles all booking-related API calls
  */
 
-const API_BASE_URL = "/api";
+// Use environment variable for API base URL, fallback to relative path for development
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+const API_URL = `${API_BASE_URL}/api`;
 
 /**
  * Create a new booking

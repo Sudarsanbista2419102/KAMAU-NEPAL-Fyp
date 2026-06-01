@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_URL = "/api/users";
+// Use environment variable for API base URL, fallback to relative path for development
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '';
+const API_URL = `${API_BASE_URL}/api/users`;
 
 export const signup = async (data) => {
   const res = await axios.post(`${API_URL}/signup`, data);
