@@ -70,6 +70,17 @@ const EditProfileModal = ({ isOpen, onClose, professionalData, onUpdate }) => {
     setIsSubmitting(true);
     setError('');
     
+    // Validate hourly wage
+    if (formData.hourlyWage) {
+      const wage = parseFloat(formData.hourlyWage);
+      if (wage < 100) {
+        setError('Hourly wage must be at least रु 100');
+        toast.error('Hourly wage must be at least रु 100');
+        setIsSubmitting(false);
+        return;
+      }
+    }
+    
     try {
       const token = localStorage.getItem('token');
       const response = await axios.put(`/api/professionals/${professionalData._id}`, formData, {

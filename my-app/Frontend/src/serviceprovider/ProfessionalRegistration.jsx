@@ -194,8 +194,11 @@ const ProfessionalRegistration = () => {
       newErrors.serviceArea = "Service area is required"
     }
 
-    if (formData.hourlyWage && parseFloat(formData.hourlyWage) < 0) {
-      newErrors.hourlyWage = "Hourly wage cannot be negative"
+    if (formData.hourlyWage) {
+      const wage = parseFloat(formData.hourlyWage);
+      if (wage < 100) {
+        newErrors.hourlyWage = "Hourly wage must be at least रु 100"
+      }
     }
 
     // Availability validation

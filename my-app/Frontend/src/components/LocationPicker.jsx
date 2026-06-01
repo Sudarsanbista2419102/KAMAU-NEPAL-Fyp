@@ -24,21 +24,31 @@ const LocationMarker = ({ position, setPosition }) => {
   );
 };
 
-const RecenterMap = ({ position }) => {
+const RecenterMap = ({ position, onMapReady }) => {
   const map = useMap();
+  useEffect(() => {
+    if (map && onMapReady) {
+      onMapReady(true);
+    }
+  }, [map, onMapReady]);
+
   useEffect(() => {
     if (position && map) {
       try {
         // Ensure map is fully initialized before calling setView
-        if (map._container && map._container.offsetHeight > 0) {
-          map.setView(position, map.getZoom ? map.getZoom() : 13, { animate: true });
+        if (map._container && map._container.offsetHeight > 0 && map._panes && map._panes.mapPane) {
+          map.setView(position, map.getZoom ? map.getZoom() : 13, { animate: false });
         } else {
           // If map container not ready, retry after delay
           setTimeout(() => {
-            if (map && map._container && map._container.offsetHeight > 0) {
-              map.setView(position, map.getZoom ? map.getZoom() : 13, { animate: true });
+            if (map && map._container && map._container.offsetHeight > 0 && map._panes && map._panes.mapPane) {
+              try {
+                map.setView(position, map.getZoom ? map.getZoom() : 13, { animate: false });
+              } catch (e) {
+                console.error('Retry map view error:', e);
+              }
             }
-          }, 200);
+          }, 300);
         }
       } catch (error) {
         console.error('Map view error:', error);
@@ -51,15 +61,16 @@ const RecenterMap = ({ position }) => {
 const LocationPicker = ({ onLocationSelect, initialLocation }) => {
   const [position, setPosition] = useState(initialLocation || [27.7172, 85.3240]);
   const [isLocating, setIsLocating] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
-    if (onLocationSelect && position) {
+    if (onLocationSelect && position && mapReady) {
       onLocationSelect({
         lat: position[0],
         lng: position[1]
       });
     }
-  }, [position, onLocationSelect]);
+  }, [position, onLocationSelect, mapReady]);
 
   const handleGetCurrentLocation = () => {
     setIsLocating(true);
@@ -108,13 +119,14 @@ const LocationPicker = ({ onLocationSelect, initialLocation }) => {
           center={position}
           zoom={13}
           style={{ height: '100%', width: '100%' }}
+          whenCreated={() => setMapReady(true)}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <LocationMarker position={position} setPosition={setPosition} />
-          <RecenterMap position={position} />
+          <RecenterMap position={position} onMapReady={setMapReady} />
         </MapContainer>
         
         <div className="absolute bottom-4 left-4 z-[1000] bg-white/90 backdrop-blur px-3 py-2 rounded-xl border border-slate-200 shadow-lg pointer-events-none">

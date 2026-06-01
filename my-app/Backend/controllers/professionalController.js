@@ -48,6 +48,18 @@ export const registerProfessional = async (req, res) => {
       });
     }
 
+    // Validate hourly wage
+    if (hourlyWage) {
+      const wage = parseFloat(hourlyWage);
+      if (wage < 100) {
+        console.log('❌ Hourly wage below minimum:', wage);
+        return res.status(400).json({
+          success: false,
+          message: 'Hourly wage must be at least रु 100'
+        });
+      }
+    }
+
     // Check if user already has a professional profile
     if (userId) {
       const existingProfile = await ProfessionalModel.findOne({ userId });
@@ -428,6 +440,18 @@ export const updateProfessionalProfile = async (req, res) => {
   try {
     const { id } = req.params;
     const { firstName, lastName, bio, hourlyWage, serviceArea, phone, gender, formattedAddress, availability } = req.body;
+
+    // Validate hourly wage if provided
+    if (hourlyWage !== undefined) {
+      const wage = parseFloat(hourlyWage);
+      if (wage < 100) {
+        console.log('❌ Hourly wage below minimum:', wage);
+        return res.status(400).json({
+          success: false,
+          message: 'Hourly wage must be at least रु 100'
+        });
+      }
+    }
 
     const updateData = {};
 
