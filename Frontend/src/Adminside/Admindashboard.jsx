@@ -353,9 +353,10 @@ const AdminDashboard = () => {
     // Add Profile Image if exists
     if (professional.profileImage) {
       try {
+        const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://kamau-nepal-fyp.onrender.com';
         const imgUrl = professional.profileImage.startsWith('http') 
           ? professional.profileImage 
-          : `${window.location.origin}/${professional.profileImage.replace(/\\/g, '/')}`;
+          : `${API_BASE_URL}/${professional.profileImage.replace(/\\/g, '/')}`;
         
         // Asynchronously load the image to be added to PDF
         const img = await new Promise((resolve, reject) => {
