@@ -104,8 +104,8 @@ const CompaniesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center">
           {/* Left: Logo */}
           <div className="flex-1 flex items-center gap-6">
@@ -125,7 +125,7 @@ const CompaniesPage = () => {
             {isLoggedIn ? (
               <button
                 onClick={() => navigate(localStorage.getItem('userRole') === 'admin' ? '/admin/dashboard' : '/dashboard')}
-                className="flex items-center gap-3 bg-white border border-slate-100 px-3 py-1.5 rounded-xl shadow-sm hover:shadow-md transition-all"
+                className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-3 py-1.5 rounded-xl shadow-sm hover:shadow-md transition-all"
               >
                 <div className="h-8 w-8 rounded-full overflow-hidden">
                   {userProfileImage ? (
@@ -142,7 +142,7 @@ const CompaniesPage = () => {
                   )}
                 </div>
                 <div className="text-left hidden sm:block">
-                  <div className="text-xs font-bold text-slate-900 leading-none">{userName}</div>
+                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-none">{userName}</div>
                   <div className="text-[10px] text-slate-400">
                     {localStorage.getItem('userRole') === 'admin' ? 'Admin Panel' : 'Dashboard'}
                   </div>
@@ -166,7 +166,7 @@ const CompaniesPage = () => {
             <input 
               type="text" 
               placeholder="Search companies by name or industry..." 
-              className="w-full py-4 pl-12 pr-4 rounded-2xl text-slate-900 focus:outline-none shadow-lg"
+              className="w-full py-4 pl-12 pr-4 rounded-2xl text-slate-900 dark:text-slate-100 dark:bg-slate-800 focus:outline-none shadow-lg"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -177,16 +177,16 @@ const CompaniesPage = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredCompanies.map(company => (
-            <div key={company.id} className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
+            <div key={company.id} className="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all group">
               <div className="flex gap-4 mb-6">
                 <img src={company.logo} alt={company.name} className="w-16 h-16 rounded-2xl object-cover" />
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900 group-hover:text-teal-600 transition-colors">{company.name}</h3>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">{company.name}</h3>
                   <p className="text-teal-600 font-semibold text-sm">{company.industry}</p>
                 </div>
               </div>
-              <p className="text-slate-500 text-sm mb-6 line-clamp-2">{company.description}</p>
-              <div className="flex flex-wrap gap-4 mb-6 text-sm text-slate-600">
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 line-clamp-2">{company.description}</p>
+              <div className="flex flex-wrap gap-4 mb-6 text-sm text-slate-600 dark:text-slate-400">
                 <div className="flex items-center gap-1"><MapPin size={16} /> {company.location}</div>
                 <div className="flex items-center gap-1"><Building2 size={16} /> {company.employees} Employees</div>
                 <div className="flex items-center gap-1"><Star size={16} className="text-orange-400 fill-orange-400" /> {company.rating}</div>

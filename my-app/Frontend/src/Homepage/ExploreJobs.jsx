@@ -24,10 +24,10 @@ const Button = ({
     const baseStyles = 'inline-flex items-center justify-center font-bold transition-all duration-300 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed rounded-xl';
     const variants = {
         primary: 'bg-teal-600 text-white hover:bg-teal-700 shadow-lg shadow-teal-600/20 active:scale-95',
-        secondary: 'bg-white border-2 border-slate-200 text-slate-700 hover:border-teal-500 hover:text-teal-600 active:scale-95',
+        secondary: 'bg-white dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:border-teal-500 hover:text-teal-600 dark:hover:text-teal-400 active:scale-95',
         orange: 'bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20 active:scale-95',
-        ghost: 'bg-transparent text-slate-500 hover:bg-slate-100',
-        outline: 'border-2 border-slate-100 bg-white text-slate-600 hover:border-slate-200 hover:bg-slate-50'
+        ghost: 'bg-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800',
+        outline: 'border-2 border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-200 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
     };
     const sizes = {
         sm: 'px-3 py-2 text-xs',
@@ -252,9 +252,9 @@ export default function ExploreJobs() {
     };
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans selection:bg-teal-100 selection:text-teal-900">
+        <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-teal-100 selection:text-teal-900">
             {/* 1. Header / Navbar */}
-            <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm">
+            <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 shadow-sm">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center">
                     {/* Left: Logo */}
                     <div className="flex-1 flex items-center gap-6">
@@ -300,7 +300,7 @@ export default function ExploreJobs() {
 
                         <button
                             onClick={() => navigate(localStorage.getItem('userRole') === 'admin' ? '/admin/dashboard' : '/dashboard')}
-                            className="flex items-center gap-3 bg-white border border-slate-100 px-3 py-1.5 rounded-xl shadow-sm hover:shadow-md transition-all"
+                            className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-3 py-1.5 rounded-xl shadow-sm hover:shadow-md transition-all"
                         >
                             <div className="h-8 w-8 rounded-full overflow-hidden">
                                 {userProfileImage ? (
@@ -317,7 +317,7 @@ export default function ExploreJobs() {
                                 )}
                             </div>
                             <div className="text-left hidden sm:block">
-                                <div className="text-xs font-bold text-slate-900 leading-none">{localStorage.getItem('userName') || 'User'}</div>
+                                <div className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-none">{localStorage.getItem('userName') || 'User'}</div>
                                 <div className="text-[10px] text-slate-400">
                                     {localStorage.getItem('userRole') === 'admin' ? 'Admin Panel' : 'Dashboard'}
                                 </div>
@@ -331,7 +331,7 @@ export default function ExploreJobs() {
             </nav>
 
             {/* 2. Hero Section */}
-            <section className="relative pt-20 pb-16 px-6 overflow-hidden bg-white">
+            <section className="relative pt-20 pb-16 px-6 overflow-hidden bg-white dark:bg-slate-900">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full">
                     <div className="absolute top-0 right-0 w-96 h-96 bg-teal-50 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2" />
                     <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-50 rounded-full blur-3xl opacity-50 translate-y-1/2 -translate-x-1/2" />
@@ -341,7 +341,7 @@ export default function ExploreJobs() {
                     <motion.h1 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-4xl md:text-6xl font-black text-slate-900 mb-8 tracking-tight"
+                        className="text-4xl md:text-6xl font-black text-slate-900 dark:text-slate-100 mb-8 tracking-tight"
                     >
                         Explore Top-Rated <span className="text-teal-600 underline decoration-teal-100 underline-offset-8">Professionals</span> in Nepal
                     </motion.h1>
@@ -353,14 +353,14 @@ export default function ExploreJobs() {
                         className="relative group max-w-2xl mx-auto"
                     >
                         <div className="absolute inset-0 bg-teal-600/5 rounded-[32px] blur-2xl group-focus-within:bg-teal-600/10 transition-all" />
-                        <div className="relative flex items-center bg-white border border-slate-200 rounded-[28px] p-2 shadow-xl shadow-slate-200/50 focus-within:border-teal-500 focus-within:ring-4 focus-within:ring-teal-50 transition-all">
+                        <div className="relative flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[28px] p-2 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 focus-within:border-teal-500 focus-within:ring-4 focus-within:ring-teal-50 dark:focus-within:ring-teal-900/30 transition-all">
                             <Search className="ml-6 text-slate-400" size={22} />
                             <input
                                 type="text"
                                 placeholder="Search by pro name or service category..."
                                 value={searchQuery}
                                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                                className="flex-1 px-4 py-4 bg-transparent outline-none text-base font-bold text-slate-900 placeholder:text-slate-400"
+                                className="flex-1 px-4 py-4 bg-transparent outline-none text-base font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                             />
                             <Button variant="primary" className="rounded-2xl py-4 px-8 hidden sm:block">Search Now</Button>
                         </div>
@@ -372,14 +372,14 @@ export default function ExploreJobs() {
             <section className="max-w-7xl mx-auto px-6 py-12">
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
                             Top Service Categories <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
                         </h2>
                         <p className="text-sm font-bold text-slate-400">Trusted experts across multiple domains</p>
                     </div>
                     <div className="flex gap-2">
-                        <button onClick={() => scrollCategories('left')} className="p-3 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-teal-600 hover:border-teal-100 shadow-sm transition-all"><ChevronLeft size={20} /></button>
-                        <button onClick={() => scrollCategories('right')} className="p-3 rounded-full bg-white border border-slate-100 text-slate-400 hover:text-teal-600 hover:border-teal-100 shadow-sm transition-all"><ChevronRight size={20} /></button>
+                        <button onClick={() => scrollCategories('left')} className="p-3 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-teal-600 dark:hover:text-teal-400 hover:border-teal-100 dark:hover:border-teal-700 shadow-sm transition-all"><ChevronLeft size={20} /></button>
+                        <button onClick={() => scrollCategories('right')} className="p-3 rounded-full bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-teal-600 dark:hover:text-teal-400 hover:border-teal-100 dark:hover:border-teal-700 shadow-sm transition-all"><ChevronRight size={20} /></button>
                     </div>
                 </div>
 
@@ -415,14 +415,14 @@ export default function ExploreJobs() {
             <section className="max-w-7xl mx-auto px-6 py-4">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-8 border-b border-slate-100">
                     <div className="flex items-center gap-4">
-                        <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Featured Professionals</h2>
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight uppercase">Featured Professionals</h2>
                         <div className="px-3 py-1 bg-teal-50 text-teal-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-teal-100">
                             {filteredJobs.length} Found
                         </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
-                        <div className="flex items-center bg-white rounded-2xl border border-slate-200 p-1.5">
+                        <div className="flex items-center bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-1.5">
                             <Button 
                                 variant={!showFilters ? 'ghost' : 'outline'} 
                                 size="sm" 
@@ -441,8 +441,8 @@ export default function ExploreJobs() {
                             </Button>
                         </div>
 
-                        <div className="flex items-center gap-2 bg-white rounded-2xl border border-slate-200 p-1.5 px-4 h-[46px]">
-                            <span className="text-[10px] font-black text-slate-400 uppercase">Location:</span>
+                        <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-1.5 px-4 h-[46px]">
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase">Location:</span>
                             <select 
                                 value={selectedLocation} 
                                 onChange={(e) => setSelectedLocation(e.target.value)}
@@ -460,7 +460,7 @@ export default function ExploreJobs() {
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden bg-white border-x border-b border-slate-100 rounded-b-[32px] mb-8"
+                            className="overflow-hidden bg-white dark:bg-slate-800 border-x border-b border-slate-100 dark:border-slate-700 rounded-b-[32px] mb-8"
                         >
                             <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-12">
                                 <div>
@@ -499,7 +499,7 @@ export default function ExploreJobs() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {loading ? (
                         [...Array(6)].map((_, i) => (
-                            <div key={i} className="bg-white rounded-[32px] p-8 animate-pulse border border-slate-100">
+                            <div key={i} className="bg-white dark:bg-slate-800 rounded-[32px] p-8 animate-pulse border border-slate-100 dark:border-slate-700">
                                 <div className="flex items-center gap-4 mb-8">
                                     <div className="w-16 h-16 rounded-2xl bg-slate-100" />
                                     <div className="flex-1 space-y-3">
@@ -521,7 +521,7 @@ export default function ExploreJobs() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.1 }}
-                                className="group bg-white rounded-[32px] border border-slate-100 hover:border-teal-100 hover:shadow-2xl hover:shadow-slate-200/50 transition-all p-7 relative"
+                                className="group bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700 hover:border-teal-100 dark:hover:border-teal-700 hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 transition-all p-7 relative"
                             >
                                 {/* Card Header */}
                                 <div className="flex items-start justify-between mb-6">
@@ -540,7 +540,7 @@ export default function ExploreJobs() {
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-1.5 mb-0.5">
-                                                <h3 className="text-base font-black text-slate-900 group-hover:text-teal-600 transition-colors tracking-tight">{job.company}</h3>
+                                                <h3 className="text-base font-black text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors tracking-tight">{job.company}</h3>
                                                 <CheckCircle2 size={14} className="text-teal-500 fill-teal-50" />
                                             </div>
                                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{job.title}</p>
@@ -548,7 +548,7 @@ export default function ExploreJobs() {
                                     </div>
                                     <button 
                                         onClick={(e) => toggleSaveJob(e, job.id)}
-                                        className={`p-2.5 rounded-xl transition-all ${isJobSaved(job.id) ? 'bg-orange-50 text-orange-500' : 'bg-slate-50 text-slate-300 hover:text-slate-900'}`}
+                                        className={`p-2.5 rounded-xl transition-all ${isJobSaved(job.id) ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400' : 'bg-slate-50 dark:bg-slate-700 text-slate-300 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-100'}`}
                                     >
                                         <BookmarkPlus size={18} className={isJobSaved(job.id) ? 'fill-orange-500' : ''} />
                                     </button>
@@ -578,19 +578,19 @@ export default function ExploreJobs() {
 
                                 {/* Stats Row */}
                                 <div className="grid grid-cols-3 gap-3 mb-6">
-                                    <div className="bg-slate-50 rounded-2xl p-3 text-center">
-                                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-0.5">Services</div>
-                                        <div className="text-xs font-black text-slate-900">{job.completedJobs > 0 ? `${job.completedJobs}+` : 'New'}</div>
+                                    <div className="bg-slate-50 dark:bg-slate-700 rounded-2xl p-3 text-center">
+                                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter mb-0.5">Services</div>
+                                        <div className="text-xs font-black text-slate-900 dark:text-slate-100">{job.completedJobs > 0 ? `${job.completedJobs}+` : 'New'}</div>
                                     </div>
-                                    <div className="bg-slate-50 rounded-2xl p-3 text-center">
-                                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-0.5">Rating</div>
-                                        <div className="text-xs font-black text-slate-900 flex items-center justify-center gap-1">
+                                    <div className="bg-slate-50 dark:bg-slate-700 rounded-2xl p-3 text-center">
+                                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter mb-0.5">Rating</div>
+                                        <div className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center justify-center gap-1">
                                             <Star size={10} className="fill-orange-400 text-orange-400" /> {job.rating || 'N/A'}
                                         </div>
                                     </div>
-                                    <div className="bg-slate-50 rounded-2xl p-3 text-center">
-                                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-0.5">Area</div>
-                                        <div className="text-xs font-black text-slate-900 truncate">Nepal</div>
+                                    <div className="bg-slate-50 dark:bg-slate-700 rounded-2xl p-3 text-center">
+                                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter mb-0.5">Area</div>
+                                        <div className="text-xs font-black text-slate-900 dark:text-slate-100 truncate">Nepal</div>
                                     </div>
                                 </div>
 
@@ -636,7 +636,7 @@ export default function ExploreJobs() {
                             </motion.div>
                         ))
                     ) : (
-                        <div className="col-span-full bg-white rounded-[40px] border border-slate-100 p-20 text-center shadow-sm">
+                        <div className="col-span-full bg-white dark:bg-slate-800 rounded-[40px] border border-slate-100 dark:border-slate-700 p-20 text-center shadow-sm">
                             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <Search size={32} className="text-slate-200" />
                             </div>

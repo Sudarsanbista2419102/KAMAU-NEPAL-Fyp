@@ -181,9 +181,9 @@ const HomePage = () => {
 
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
       {/* Navigation Part */}
-      <nav className="sticky top-0 z-50 bg-white/40 backdrop-blur-2xl border-b border-slate-200/50 shadow-sm transition-all duration-300">
+      <nav className="sticky top-0 z-50 bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-20">
             {/* Left: Logo */}
@@ -207,7 +207,7 @@ const HomePage = () => {
                   <>
                     <button
                       onClick={() => navigate(localStorage.getItem('userRole') === 'admin' ? '/admin/dashboard' : '/dashboard')}
-                      className="flex items-center gap-3 bg-white border border-slate-100 px-3 py-1.5 rounded-xl shadow-sm hover:shadow-md"
+                      className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-3 py-1.5 rounded-xl shadow-sm hover:shadow-md"
                     >
                       <div className="h-8 w-8 rounded-full overflow-hidden">
                         {userProfileImage ? (
@@ -224,7 +224,7 @@ const HomePage = () => {
                         )}
                       </div>
                       <div className="text-left">
-                        <div className="text-xs font-bold text-slate-900 leading-none">{userName}</div>
+                        <div className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-none">{userName}</div>
                         <div className="text-[11px] text-slate-400">
                           {localStorage.getItem('userRole') === 'admin' ? 'Admin Panel' : t('dashboard')}
                         </div>
@@ -253,7 +253,7 @@ const HomePage = () => {
           </div>
         </div>
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-slate-100 py-4 px-4 space-y-4 shadow-xl">
+          <div className="md:hidden bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 py-4 px-4 space-y-4 shadow-xl">
             {['Companies', 'Services', 'People'].map((item) => (
               <Link key={item} to={`/${item.toLowerCase()}`} className="block text-base font-semibold text-slate-700 py-2 border-b border-slate-50" onClick={() => setMobileMenuOpen(false)}>
                 {item}
@@ -290,7 +290,7 @@ const HomePage = () => {
 
       <main className="flex-grow">
         {/* Hero Part */}
-        <section className="relative overflow-hidden pt-16 pb-20 lg:pt-24 lg:pb-32 bg-gradient-to-br from-teal-50 via-white to-orange-50">
+        <section className="relative overflow-hidden pt-16 pb-20 lg:pt-24 lg:pb-32 bg-gradient-to-br from-teal-50 via-white to-orange-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900">
           <div className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl pointer-events-none" />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -299,18 +299,18 @@ const HomePage = () => {
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100 text-teal-700 text-sm font-bold mb-6">
                   <Zap size={14} className="fill-teal-700" /> {t('trusted_by')}
                 </div>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 leading-[1.1] mb-6 tracking-tight">
-                  {t('hero_title_1')} <span className="text-teal-600">{t('hero_title_2')}</span>{t('hero_title_3')}
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:!text-white leading-[1.1] mb-6 tracking-tight">
+                  <span className="dark:!text-white">{t('hero_title_1')}</span> <span className="text-teal-600 dark:!text-teal-400">{t('hero_title_2')}</span><span className="dark:!text-white">{t('hero_title_3')}</span>
                 </h1>
-                <p className="text-base text-slate-600 mb-10 max-w-2xl leading-relaxed">
+                <p className="text-base text-slate-600 dark:text-slate-300 mb-10 max-w-2xl leading-relaxed">
                   {t('hero_desc')}
                 </p>
                 <div className="relative group max-w-2xl mb-12">
                   <div className="absolute inset-0 bg-teal-600/5 rounded-[22px] blur-xl group-focus-within:bg-teal-600/10 transition-all" />
-                  <div className="relative flex flex-col sm:flex-row gap-2 bg-white p-2 rounded-[20px] shadow-lg border border-slate-200">
+                  <div className="relative flex flex-col sm:flex-row gap-2 bg-white dark:bg-slate-800 p-2 rounded-[20px] shadow-lg border border-slate-200 dark:border-slate-700">
                     <div className="flex-grow relative">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                      <input type="text" placeholder={t('search_placeholder')} className="w-full bg-transparent py-4 pl-12 pr-4 text-slate-800 focus:outline-none font-medium" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                      <input type="text" placeholder={t('search_placeholder')} className="w-full bg-transparent py-4 pl-12 pr-4 text-slate-800 dark:text-slate-100 focus:outline-none font-medium" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                     </div>
                     <Button 
                       variant="primary" 
@@ -322,16 +322,16 @@ const HomePage = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                    <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center text-teal-700 mb-4"><ShieldCheck size={20} /></div>
-                    <h3 className="font-bold text-slate-900 mb-1">{t('looking_for_work')}</h3>
-                    <p className="text-sm text-slate-500 mb-4">Set up your profile and reach top companies searching for your skills.</p>
+                  <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow">
+                    <div className="w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center text-teal-700 dark:text-teal-400 mb-4"><ShieldCheck size={20} /></div>
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1">{t('looking_for_work')}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Set up your profile and reach top companies searching for your skills.</p>
                     <Button variant="secondary" size="sm" className="w-full" onClick={() => navigate('/explore-jobs')}>{t('explore_pros')} </Button>
                   </div>
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-700 mb-4"><UserCircle size={20} /></div>
-                    <h3 className="font-bold text-slate-900 mb-1">{t('need_to_hire')}</h3>
-                    <p className="text-sm text-slate-500 mb-4">Find verified service providers with high ratings and local expertise.</p>
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow">
+                    <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center text-orange-700 dark:text-orange-400 mb-4"><UserCircle size={20} /></div>
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1">{t('need_to_hire')}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Find verified service providers with high ratings and local expertise.</p>
                     <Button variant="primary" size="sm" className="w-full" onClick={() => navigate('/explore-jobs')}>{t('start_hiring')}</Button>
                   </div>
                 </div>
@@ -341,7 +341,7 @@ const HomePage = () => {
                   <div className="absolute -top-10 -left-10 w-40 h-40 bg-orange-200/40 rounded-3xl rotate-12 -z-10" />
                   <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-teal-200/40 rounded-full -z-10" />
                   <img src="/assets/homepage.jpg" alt="Professional Worker" className="rounded-[40px] shadow-2xl border-[12px] border-white object-cover aspect-[4/5] w-full" />
-                  <div className="absolute bottom-8 -left-8 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 animate-bounce">
+                  <div className="absolute bottom-8 -left-8 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 animate-bounce">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-teal-500 flex items-center justify-center text-white"><ShieldCheck size={24} /></div>
                       <div>
@@ -349,7 +349,7 @@ const HomePage = () => {
                           <CheckCircle2 size={14} className="fill-emerald-100" />
                           <p className="text-[10px] font-black uppercase tracking-wider">{t('verified_talent')}</p>
                         </div>
-                        <p className="text-lg font-black text-slate-900">{t('guaranteed')}</p>
+                        <p className="text-lg font-black text-slate-900 dark:text-slate-100">{t('guaranteed')}</p>
                       </div>
                     </div>
                   </div>
@@ -360,10 +360,10 @@ const HomePage = () => {
         </section>
 
         {/* Services Part */}
-        <section className="py-24 bg-white">
+        <section className="py-24 bg-white dark:bg-slate-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-2xl md:text-3xl font-black text-orange-500 mb-4 tracking-tight">{t('what_need_today')}</h2>
-            <p className="text-slate-500 max-w-2xl mx-auto font-medium mb-16">{t('popular_subtitle')}</p>
+            <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-medium mb-16">{t('popular_subtitle')}</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
               {loadingCategories ? (
                 [...Array(5)].map((_, i) => (
@@ -374,7 +374,7 @@ const HomePage = () => {
                   <button 
                     key={category.id} 
                     onClick={() => navigate('/people', { state: { selectedCategory: category.id } })}
-                    className="group flex flex-col items-center p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:bg-white hover:border-teal-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden"
+                    className="group flex flex-col items-center p-8 rounded-3xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-700 hover:border-teal-200 dark:hover:border-teal-600 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden"
                   >
                     <div className="w-20 h-20 mb-4 group-hover:scale-110 transition-transform duration-300 flex items-center justify-center">
                       {category.iconType === 'image' ? (
@@ -415,8 +415,8 @@ const HomePage = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
               <div>
-                <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-4 tracking-tight">{t('featured_pros')}</h2>
-                <p className="text-slate-500 font-medium">{t('featured_subtitle')}</p>
+                <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-slate-100 mb-4 tracking-tight">{t('featured_pros')}</h2>
+                <p className="text-slate-500 dark:text-slate-400 font-medium">{t('featured_subtitle')}</p>
               </div>
               <Button 
                 variant="outline" 
@@ -429,11 +429,11 @@ const HomePage = () => {
             <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 transparent' }}>
               {loadingProfessionals ? (
                 <div className="flex-1 text-center py-8 min-w-full">
-                  <p className="text-slate-500">Loading professionals...</p>
+                  <p className="text-slate-500 dark:text-slate-400">Loading professionals...</p>
                 </div>
               ) : professionals.length > 0 ? (
                 professionals.map((p) => (
-                  <div key={p._id} className="group bg-white rounded-[32px] p-6 shadow-sm border border-slate-100 hover:border-teal-500 transition-all duration-300 flex flex-col relative overflow-hidden snap-start shrink-0" style={{ width: '300px', minHeight: '380px' }}>
+                  <div key={p._id} className="group bg-white dark:bg-slate-800 rounded-[32px] p-6 shadow-sm border border-slate-100 dark:border-slate-700 hover:border-teal-500 dark:hover:border-teal-600 transition-all duration-300 flex flex-col relative overflow-hidden snap-start shrink-0" style={{ width: '300px', minHeight: '380px' }}>
                     <div className="absolute top-0 left-0 w-full h-2 bg-teal-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="flex justify-between items-start mb-6">
                       <div className="w-16 h-16 rounded-2xl bg-teal-50 shadow-inner overflow-hidden relative">
@@ -447,8 +447,8 @@ const HomePage = () => {
                       {p.verified && <div className="bg-teal-50 text-teal-600 p-1.5 rounded-xl"><CheckCircle2 size={18} /></div>}
                     </div>
                     <div className="mb-4">
-                      <h3 className="text-lg font-bold text-slate-900 group-hover:text-teal-600 transition-colors">{p.name}</h3>
-                      <p className="text-sm font-semibold text-slate-400 uppercase tracking-widest mt-1">{p.title}</p>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">{p.name}</h3>
+                      <p className="text-sm font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">{p.title}</p>
                     </div>
                     <div className="space-y-3 mb-8">
                       <div className="flex items-center gap-2">
@@ -456,13 +456,13 @@ const HomePage = () => {
                           {[...Array(5)].map((_, i) => <Star key={i} size={14} className={i < Math.floor(p.rating) ? "fill-orange-400 text-orange-400" : "text-slate-200"} />)}
                         </div>
                         <span className="text-sm font-black">{p.rating}</span>
-                        <span className="text-sm text-slate-400">({p.reviews})</span>
+                        <span className="text-sm text-slate-400 dark:text-slate-500">({p.reviews})</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm font-medium text-slate-500 truncate"><MapPin size={16} className="text-teal-500 shrink-0" /> <span className="truncate">{p.location}</span></div>
+                      <div className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 truncate"><MapPin size={16} className="text-teal-500 shrink-0" /> <span className="truncate">{p.location}</span></div>
                       <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-xl text-xs font-black text-emerald-600 w-fit">
                         <CheckCircle2 size={14} className="text-emerald-500" /> {p.completedJobs} {p.completedJobs === 1 ? t('service') : t('services_done')}
                       </div>
-                      <div className="text-base font-black text-slate-900">{p.hourlyRate}</div>
+                      <div className="text-base font-black text-slate-900 dark:text-slate-100">{p.hourlyRate}</div>
                     </div>
                     <Button
                       variant="secondary"
@@ -475,7 +475,7 @@ const HomePage = () => {
                 ))
               ) : (
                 <div className="flex-1 text-center py-8 min-w-full">
-                  <p className="text-slate-500">No verified professionals yet. Be the first to register!</p>
+                  <p className="text-slate-500 dark:text-slate-400">No verified professionals yet. Be the first to register!</p>
                 </div>
               )}
             </div>
@@ -519,7 +519,7 @@ const HomePage = () => {
               </ul>
             </div>
           </div>
-          <div className="pt-10 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center text-sm text-slate-500">
+          <div className="pt-10 border-t border-slate-800 dark:border-slate-700 flex flex-col md:flex-row justify-between items-center text-sm text-slate-500 dark:text-slate-400">
             <p>© 2025 Kamau Nepal. All rights reserved.</p>
             <div className="flex items-center gap-1">Made By<Heart size={14} className="text-red-500 fill-red-500" /> SudarsanBista</div>
           </div>

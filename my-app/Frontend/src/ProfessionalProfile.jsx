@@ -24,10 +24,10 @@ const Button = ({
 
   const variants = {
     primary: 'bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:shadow-lg hover:shadow-teal-500/30 active:scale-95',
-    secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200 active:scale-95',
-    outline: 'border-2 border-slate-200 text-slate-900 hover:border-teal-500 hover:text-teal-600 hover:bg-teal-50 active:scale-95',
-    ghost: 'text-slate-600 hover:text-teal-600 hover:bg-slate-50 active:scale-95',
-    danger: 'bg-red-50 border border-red-200 text-red-600 hover:bg-red-100',
+    secondary: 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-600 active:scale-95',
+    outline: 'border-2 border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100 hover:border-teal-500 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 active:scale-95',
+    ghost: 'text-slate-600 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95',
+    danger: 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30',
   };
 
   const sizes = {
@@ -547,13 +547,13 @@ const ProfessionalProfile = () => {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100">
-        <div className="text-center bg-white p-12 rounded-2xl shadow-xl border border-slate-100 max-w-md">
-          <div className="w-16 h-16 bg-red-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="text-red-600" size={32} />
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+        <div className="text-center bg-white dark:bg-slate-800 p-12 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 max-w-md">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="text-red-600 dark:text-red-400" size={32} />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-3">Profile Not Found</h2>
-          <p className="text-slate-500 mb-8 font-medium">{error || 'Sorry, we couldn\'t find the professional you\'re looking for.'}</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">Profile Not Found</h2>
+          <p className="text-slate-500 dark:text-slate-400 mb-8 font-medium">{error || 'Sorry, we couldn\'t find the professional you\'re looking for.'}</p>
           <Button onClick={() => navigate('/')} className="w-full">Return Home</Button>
         </div>
       </div>
@@ -561,7 +561,7 @@ const ProfessionalProfile = () => {
   }
 
   return (
-    <div className="bg-gradient-to-b from-slate-50 via-slate-50 to-slate-100 pb-24 relative">
+    <div className="bg-gradient-to-b from-slate-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 pb-24 relative">
       <style>{`
         @keyframes slideDown {
           from { opacity: 0; transform: translateY(-20px); }
@@ -584,7 +584,7 @@ const ProfessionalProfile = () => {
       `}</style>
 
       {/* Hero Header */}
-      <div className="relative h-60 md:h-80 bg-slate-900">
+      <div className="relative h-60 md:h-80 bg-slate-900 dark:bg-slate-950">
         {profile?.coverImage ? (
           <OptimizedImage
             key={profile.coverImage}
@@ -597,15 +597,15 @@ const ProfessionalProfile = () => {
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] to-[#10b981]" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-slate-50" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-slate-50 dark:to-slate-900" />
         {/* Top Action Bar */}
         <div className="absolute top-0 left-0 right-0 p-4 md:p-6 flex justify-between items-center z-20">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => navigate(-1)}
-              className="p-2 md:p-3 bg-white/90 backdrop-blur-sm rounded-xl hover:bg-white transition-all duration-300 shadow-lg"
+              className="p-2 md:p-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-xl hover:bg-white dark:hover:bg-slate-700 transition-all duration-300 shadow-lg"
             >
-              <ChevronLeft className="text-slate-900" size={20} />
+              <ChevronLeft className="text-slate-900 dark:text-slate-100" size={20} />
             </button>
           </div>
           <div className="flex gap-3">
@@ -614,7 +614,7 @@ const ProfessionalProfile = () => {
               <>
                 <button 
                   onClick={() => coverInputRef.current?.click()}
-                  className="p-2 md:p-3 bg-white/90 backdrop-blur-sm rounded-xl hover:bg-white transition-all duration-300 shadow-lg group"
+                  className="p-2 md:p-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-xl hover:bg-white dark:hover:bg-slate-700 transition-all duration-300 shadow-lg group"
                   disabled={isUpdatingCover}
                   title="Change Cover Photo"
                 >
@@ -634,18 +634,18 @@ const ProfessionalProfile = () => {
             )}
             <button 
               onClick={() => setIsFavorite(!isFavorite)}
-              className="p-2 md:p-3 bg-white/90 backdrop-blur-sm rounded-xl hover:bg-white transition-all duration-300 shadow-lg"
+              className="p-2 md:p-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-xl hover:bg-white dark:hover:bg-slate-700 transition-all duration-300 shadow-lg"
             >
               <Heart 
                 size={20} 
-                className={isFavorite ? "fill-red-500 text-red-500" : "text-slate-600"}
+                className={isFavorite ? "fill-red-500 text-red-500" : "text-slate-600 dark:text-slate-400"}
               />
             </button>
             <button 
               onClick={handleShare}
-              className="p-2 md:p-3 bg-white/90 backdrop-blur-sm rounded-xl hover:bg-white transition-all duration-300 shadow-lg"
+              className="p-2 md:p-3 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-xl hover:bg-white dark:hover:bg-slate-700 transition-all duration-300 shadow-lg"
             >
-              <Share2 className="text-slate-600" size={20} />
+              <Share2 className="text-slate-600 dark:text-slate-400" size={20} />
             </button>
           </div>
         </div>
@@ -654,7 +654,7 @@ const ProfessionalProfile = () => {
         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 z-10 animate-slide-down">
           <div className="relative group">
             <div 
-              className="w-36 h-36 md:w-48 md:h-48 rounded-2xl border-[6px] border-white overflow-hidden bg-slate-100 flex items-center justify-center shadow-2xl relative cursor-pointer"
+              className="w-36 h-36 md:w-48 md:h-48 rounded-2xl border-[6px] border-white dark:border-slate-800 overflow-hidden bg-slate-100 dark:bg-slate-700 flex items-center justify-center shadow-2xl relative cursor-pointer"
               onClick={() => setPreviewImage(profile?.profileImage)}
             >
               <OptimizedImage
@@ -701,7 +701,7 @@ const ProfessionalProfile = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 md:pt-36">
         {/* Profile Header Info */}
         <div className="text-center mb-12 animate-fade-in-up">
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-3">
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-slate-100 mb-3">
             {profile?.firstName} {profile?.lastName}
           </h1>
           <div className="flex justify-center gap-3 mb-4 flex-wrap">
@@ -729,32 +729,32 @@ const ProfessionalProfile = () => {
                 { label: 'Response Time', value: '< 1 hour', icon: '⚡' },
                 { label: 'Completed', value: `${profile?.completedJobs || 0} Services`, icon: '✓' }
               ].map((stat, idx) => (
-                <div key={idx} className="bg-white rounded-xl p-4 border border-slate-100 hover:border-teal-200 hover:shadow-md transition-all duration-300">
+                <div key={idx} className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-100 dark:border-slate-700 hover:border-teal-200 dark:hover:border-teal-600 hover:shadow-md transition-all duration-300">
                   <div className="text-2xl mb-2">{stat.icon}</div>
-                  <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">{stat.label}</p>
-                  <p className="text-lg font-bold text-slate-900">{stat.value}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1">{stat.label}</p>
+                  <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{stat.value}</p>
                 </div>
               ))}
             </div>
 
             {/* Bio Section */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 animate-fade-in-up section-delay-2">
-              <h2 className="text-2xl font-bold text-slate-900 mb-5 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center">
-                  <UserCircle className="text-teal-600" size={20} />
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-sm border border-slate-100 dark:border-slate-700 animate-fade-in-up section-delay-2">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-5 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
+                  <UserCircle className="text-teal-600 dark:text-teal-400" size={20} />
                 </div>
                 About
               </h2>
-              <p className="text-slate-600 leading-relaxed text-lg">
+              <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-lg">
                 {profile?.bio || "This professional is verified by the Kamau Nepal team for excellence in service delivery."}
               </p>
             </div>
 
             {/* Skills Section */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 animate-fade-in-up section-delay-2">
-              <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center">
-                  <Award className="text-teal-600" size={20} />
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-sm border border-slate-100 dark:border-slate-700 animate-fade-in-up section-delay-2">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
+                  <Award className="text-teal-600 dark:text-teal-400" size={20} />
                 </div>
                 Skills & Expertise
               </h2>
@@ -763,7 +763,7 @@ const ProfessionalProfile = () => {
                   {(profile?.skills && profile.skills.length > 0 ? [...new Set(profile.skills)] : ["Professional Service", "Quality Work", "Reliable", "Verified"]).map((skill, index) => (
                     <span 
                       key={`skill-${skill}-${index}`}
-                      className="px-4 py-2 bg-gradient-to-r from-teal-50 to-teal-50 border border-teal-200 rounded-xl font-semibold text-teal-700 hover:border-teal-400 transition-colors"
+                      className="px-4 py-2 bg-gradient-to-r from-teal-50 dark:from-teal-900/30 to-teal-50 dark:to-teal-900/30 border border-teal-200 dark:border-teal-700 rounded-xl font-semibold text-teal-700 dark:text-teal-400 hover:border-teal-400 dark:hover:border-teal-600 transition-colors"
                     >
                       {skill}
                     </span>
@@ -771,13 +771,13 @@ const ProfessionalProfile = () => {
                 </div>
                 
                 {profile?.tools && profile.tools.length > 0 && (
-                  <div className="pt-4 border-t border-slate-100">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Tools & Technologies</p>
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-700">
+                    <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">Tools & Technologies</p>
                     <div className="flex flex-wrap gap-2">
                       {[...new Set(profile.tools)].map((tool, index) => (
                         <span 
                           key={`tool-${tool}-${index}`}
-                          className="px-3 py-1.5 bg-gradient-to-r from-teal-500 to-teal-600 text-white font-bold text-xs uppercase tracking-wider rounded-lg"
+                          className="px-3 py-1.5 bg-gradient-to-r from-teal-500 to-teal-600 dark:from-teal-600 dark:to-teal-700 text-white font-bold text-xs uppercase tracking-wider rounded-lg"
                         >
                           {tool}
                         </span>
@@ -789,11 +789,11 @@ const ProfessionalProfile = () => {
             </div>
 
             {/* Reviews Section */}
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 animate-fade-in-up section-delay-3">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-sm border border-slate-100 dark:border-slate-700 animate-fade-in-up section-delay-3">
               <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-                    <Star className="text-orange-600 fill-current" size={20} />
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                    <Star className="text-orange-600 dark:text-orange-400 fill-current" size={20} />
                   </div>
                   Reviews ({reviews.length})
                 </h2>
@@ -910,29 +910,29 @@ const ProfessionalProfile = () => {
 
             {/* Education & Certifications */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in-up section-delay-3">
-              <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
-                <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-                    <GraduationCap className="text-emerald-600" size={20} />
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-sm border border-slate-100 dark:border-slate-700">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                    <GraduationCap className="text-emerald-600 dark:text-emerald-400" size={20} />
                   </div>
                   Education
                 </h3>
-                <div className="relative pl-6 before:absolute before:left-0 before:top-2 before:bottom-0 before:w-0.5 before:bg-emerald-200">
-                  <p className="font-bold text-slate-900">{profile?.education || "Professional Training"}</p>
-                  <p className="text-sm text-slate-500 mt-1">Certified Professional</p>
+                <div className="relative pl-6 before:absolute before:left-0 before:top-2 before:bottom-0 before:w-0.5 before:bg-emerald-200 dark:before:bg-emerald-700">
+                  <p className="font-bold text-slate-900 dark:text-slate-100">{profile?.education || "Professional Training"}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Certified Professional</p>
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
-                <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-                    <ShieldCheck className="text-emerald-600" size={20} />
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-sm border border-slate-100 dark:border-slate-700">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                    <ShieldCheck className="text-emerald-600 dark:text-emerald-400" size={20} />
                   </div>
                   Certifications
                 </h3>
-                <div className="relative pl-6 before:absolute before:left-0 before:top-2 before:bottom-0 before:w-0.5 before:bg-amber-200">
-                  <p className="font-bold text-slate-900">Verified Professional</p>
-                  <p className="text-sm text-slate-500 mt-1">Kamau Nepal Certified</p>
+                <div className="relative pl-6 before:absolute before:left-0 before:top-2 before:bottom-0 before:w-0.5 before:bg-amber-200 dark:before:bg-amber-700">
+                  <p className="font-bold text-slate-900 dark:text-slate-100">Verified Professional</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Kamau Nepal Certified</p>
                 </div>
               </div>
             </div>
@@ -942,27 +942,27 @@ const ProfessionalProfile = () => {
           <div className="animate-fade-in-up section-delay-1">
             <div className="sticky top-8 space-y-6">
               {/* Booking Card */}
-              <div className="bg-white rounded-2xl p-8 shadow-md border border-slate-100 sticky top-8">
-                <h3 className="text-xl font-bold text-slate-900 mb-6">Quick Booking</h3>
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-md border border-slate-100 dark:border-slate-700 sticky top-8">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">Quick Booking</h3>
 
                 <div className="space-y-4 mb-8">
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-200 flex items-center justify-center text-emerald-700 flex-shrink-0">
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-100 dark:border-emerald-800">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-200 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-700 dark:text-emerald-400 flex-shrink-0">
                       <Clock size={20} />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Available</p>
-                      <p className="font-bold text-slate-900 text-sm mt-1">{formatAvailabilitySummary(profile?.availability)}</p>
+                      <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Available</p>
+                      <p className="font-bold text-slate-900 dark:text-slate-100 text-sm mt-1">{formatAvailabilitySummary(profile?.availability)}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100">
-                    <div className="w-10 h-10 rounded-lg bg-amber-200 flex items-center justify-center text-amber-700 flex-shrink-0">
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-100 dark:border-amber-800">
+                    <div className="w-10 h-10 rounded-lg bg-amber-200 dark:bg-amber-900/40 flex items-center justify-center text-amber-700 dark:text-amber-400 flex-shrink-0">
                       <MapPin size={20} />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">Service Area</p>
-                      <p className="font-bold text-slate-900 text-sm mt-1">{formatServiceArea(profile?.serviceArea)}, Nepal</p>
+                      <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Service Area</p>
+                      <p className="font-bold text-slate-900 dark:text-slate-100 text-sm mt-1">{formatServiceArea(profile?.serviceArea)}, Nepal</p>
                     </div>
                   </div>
                 </div>
