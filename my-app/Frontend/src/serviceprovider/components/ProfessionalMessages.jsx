@@ -434,7 +434,7 @@ const ProfessionalMessages = () => {
                                                         {msg.attachments?.length > 0 && (
                                                             <div className="mb-3 space-y-2">
                                                                 {msg.attachments.map((att, idx) => {
-                                                                    const apiBaseUrl = 'http://localhost:5001';
+                                                                    const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001';
                                                                     const fileUrl = att.url.startsWith('http') 
                                                                         ? att.url 
                                                                         : att.url.startsWith('/') 

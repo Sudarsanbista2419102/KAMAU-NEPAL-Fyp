@@ -129,6 +129,9 @@ const PaymentPage = () => {
                 
                 // eSewa REQUIRES an HTML Form POST
                 const payload = response.data.payload;
+                
+                console.log("📋 Form Payload:", payload);
+                
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = ESEWA_FORM_URL;
@@ -140,8 +143,10 @@ const PaymentPage = () => {
                     input.name = key;
                     input.value = value;
                     form.appendChild(input);
+                    console.log(`  ${key}: ${value}`);
                 });
 
+                console.log("🔗 Form Action:", ESEWA_FORM_URL);
                 document.body.appendChild(form);
                 form.submit();
             } else {

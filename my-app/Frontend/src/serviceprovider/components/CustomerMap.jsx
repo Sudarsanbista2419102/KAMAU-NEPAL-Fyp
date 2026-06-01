@@ -69,14 +69,19 @@ const RoutePath = ({ start, end }) => {
 const RecenterMap = ({ center }) => {
   const map = useMap();
   useEffect(() => {
-    if (center && center[0] && center[1] && map && map._container) {
+    if (center && center[0] && center[1] && map) {
       try {
-        // Add a small delay to ensure map is fully initialized
-        setTimeout(() => {
-          if (map && map._container && map.getZoom) {
-            map.setView(center, map.getZoom(), { animate: false });
-          }
-        }, 100);
+        // Ensure map is fully initialized before calling setView
+        if (map._container && map._container.offsetHeight > 0) {
+          map.setView(center, map.getZoom ? map.getZoom() : 13, { animate: false });
+        } else {
+          // If map container not ready, retry after delay
+          setTimeout(() => {
+            if (map && map._container && map._container.offsetHeight > 0) {
+              map.setView(center, map.getZoom ? map.getZoom() : 13, { animate: false });
+            }
+          }, 200);
+        }
       } catch (error) {
         console.error('Map view error:', error);
       }

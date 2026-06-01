@@ -33,12 +33,22 @@ export const initiateKhaltiPayment = async (req, res) => {
 
         // 3. Prepare Amount (Convert to Paisa)
         // Service cost comes as "रू 1200.00", we need 120000 paisa
-        const costStr = booking.totalCost || "0";
-        const amountNPR = parseFloat(costStr.replace(/[^\d.]/g, '')) || 0;
+        const costStr = booking.totalCost || "रू 0.00";
+        
+        // Extract numeric value from string like "रू 1200.00"
+        let amountNPR = 0;
+        if (typeof costStr === 'string') {
+            // Remove all non-numeric characters except decimal point
+            const numericStr = costStr.replace(/[^\d.]/g, '');
+            amountNPR = parseFloat(numericStr) || 0;
+        } else if (typeof costStr === 'number') {
+            amountNPR = costStr;
+        }
+        
         const amountPaisa = Math.round(amountNPR * 100);
 
         if (amountPaisa <= 0) {
-            return res.status(400).json({ success: false, message: "Transaction failed: Invalid service amount" });
+            return res.status(400).json({ success: false, message: "Transaction failed: Invalid service amount. Amount must be greater than 0." });
         }
 
         // 4. Secure Khalti Payload
@@ -60,6 +70,14 @@ export const initiateKhaltiPayment = async (req, res) => {
 
         // 5. Connect to Khalti Sandbox
         console.log("🚀 Initiating Khalti Payment for:", booking._id);
+        console.log("📊 Payment Details:", {
+            amount: amountNPR,
+            amountPaisa,
+            costStr,
+            bookingId: booking._id,
+            serviceTitle: booking.serviceTitle
+        });
+        
         const response = await axios.post(
             'https://a.khalti.com/api/v2/epayment/initiate/',
             payload,
@@ -194,26 +212,61 @@ export const initiateEsewaPayment = async (req, res) => {
     try {
         const { bookingId } = req.body;
 
+        console.log("🔵 eSewa Initiation Started");
+        console.log("📍 Booking ID:", bookingId);
+
         if (!bookingId) {
+            console.error("❌ No Booking ID provided");
             return res.status(400).json({ success: false, message: "Booking ID is required" });
         }
 
+        console.log("🔍 Fetching booking from database...");
         const booking = await Booking.findById(bookingId);
+        
         if (!booking) {
+            console.error("❌ Booking not found:", bookingId);
             return res.status(404).json({ success: false, message: "Mission mission not found" });
         }
 
+        console.log("✅ Booking found:", {
+            _id: booking._id,
+            serviceTitle: booking.serviceTitle,
+            totalCost: booking.totalCost
+        });
+
         // eSewa takes Rupees (NPR)
-        const costStr = booking.totalCost || "0";
-        const amount = parseFloat(costStr.replace(/[^\d.]/g, '')) || 0;
+        const costStr = booking.totalCost || "रू 0.00";
+        
+        // Extract numeric value from string like "रू 1200.00"
+        let amount = 0;
+        if (typeof costStr === 'string') {
+            // Remove all non-numeric characters except decimal point
+            const numericStr = costStr.replace(/[^\d.]/g, '');
+            amount = parseFloat(numericStr) || 0;
+        } else if (typeof costStr === 'number') {
+            amount = costStr;
+        }
 
         if (amount <= 0) {
-            return res.status(400).json({ success: false, message: "Invalid amount for eSewa transaction" });
+            return res.status(400).json({ success: false, message: "Invalid amount for eSewa transaction. Amount must be greater than 0." });
+        }
+
+        // eSewa minimum amount is 1 NPR
+        if (amount < 1) {
+            return res.status(400).json({ success: false, message: "eSewa minimum transaction amount is NPR 1. Current amount: " + amount });
         }
 
         // UNIQUE Transaction ID
         const transaction_uuid = `${bookingId}-${Date.now()}`;
         const product_code = process.env.ESEWA_MERCHANT_CODE || "EPAYTEST";
+
+        console.log("📊 eSewa Payment Details:", {
+            amount,
+            costStr,
+            transaction_uuid,
+            product_code,
+            bookingId: booking._id
+        });
 
         // Generate Signature: total_amount=<amount>,transaction_uuid=<uuid>,product_code=EPAYTEST
         const signature_message = `total_amount=${amount},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
@@ -241,6 +294,16 @@ export const initiateEsewaPayment = async (req, res) => {
             signature
         };
 
+        console.log("✅ eSewa Payload Ready:", {
+            amount,
+            total_amount: amount,
+            transaction_uuid,
+            product_code,
+            signature,
+            success_url: `${process.env.BACKEND_BASE_URL}/api/payments/esewa/verify`,
+            failure_url: `${process.env.BACKEND_BASE_URL}/api/payments/esewa/failure`
+        });
+
         res.status(200).json({
             success: true,
             payload
@@ -248,7 +311,17 @@ export const initiateEsewaPayment = async (req, res) => {
 
     } catch (error) {
         console.error("❌ eSewa Initiation Error:", error.message);
-        res.status(500).json({ success: false, message: "Neural gateway failure: eSewa Initiation blocked." });
+        console.error("Error Stack:", error.stack);
+        console.error("Error Details:", {
+            message: error.message,
+            code: error.code,
+            bookingId: req.body.bookingId
+        });
+        res.status(500).json({ 
+            success: false, 
+            message: "Neural gateway failure: eSewa Initiation blocked.",
+            error: error.message
+        });
     }
 };
 

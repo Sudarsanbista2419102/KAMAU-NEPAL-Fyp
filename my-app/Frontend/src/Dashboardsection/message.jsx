@@ -596,7 +596,7 @@ export default function MessagePage() {
                                                                     <div className="mb-3 space-y-3">
                                                                         {msg.attachments.map((att, i) => {
                                                                             const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(att.filename) || att.mimetype?.startsWith('image/');
-                                                                            const apiBaseUrl = 'http://localhost:5001';
+                                                                            const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001';
                                                                             const fileUrl = att.url.startsWith('http') 
                                                                                 ? att.url 
                                                                                 : att.url.startsWith('/') 

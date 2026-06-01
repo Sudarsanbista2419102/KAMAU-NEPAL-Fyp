@@ -27,14 +27,19 @@ const LocationMarker = ({ position, setPosition }) => {
 const RecenterMap = ({ position }) => {
   const map = useMap();
   useEffect(() => {
-    if (position && map && map._container) {
+    if (position && map) {
       try {
-        // Add a small delay to ensure map is fully initialized
-        setTimeout(() => {
-          if (map && map._container && map.getZoom()) {
-            map.setView(position, map.getZoom(), { animate: true });
-          }
-        }, 100);
+        // Ensure map is fully initialized before calling setView
+        if (map._container && map._container.offsetHeight > 0) {
+          map.setView(position, map.getZoom ? map.getZoom() : 13, { animate: true });
+        } else {
+          // If map container not ready, retry after delay
+          setTimeout(() => {
+            if (map && map._container && map._container.offsetHeight > 0) {
+              map.setView(position, map.getZoom ? map.getZoom() : 13, { animate: true });
+            }
+          }, 200);
+        }
       } catch (error) {
         console.error('Map view error:', error);
       }
