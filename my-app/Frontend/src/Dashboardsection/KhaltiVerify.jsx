@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader2, CheckCircle, XCircle, ShieldCheck } from 'lucide-react';
-import axios from 'axios';
+// import axios from 'axios'; // Unused - can be added when needed
 import api from '../services/apiInstance';
 import Logo from '../Logo';
 

@@ -37,7 +37,7 @@ const ResetPassword = () => {
     const upper = /[A-Z]/.test(pass);
     const lower = /[a-z]/.test(pass);
     const number = /[0-9]/.test(pass);
-    const special = /[!@#$%^&*()_+[\]:;<>,.?~\/-]/.test(pass);
+    const special = /[!@#$%^&*()_+[\]:;<>,.?~/-]/.test(pass);
 
     setPasswordStrength({ length, upper, lower, number, special });
 
