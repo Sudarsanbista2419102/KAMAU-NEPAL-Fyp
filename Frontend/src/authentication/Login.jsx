@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, ArrowRight } from "lucide-react";
-import axios from "axios";
 import api from "../services/apiInstance";
 import { useGoogleLogin } from '@react-oauth/google';
 import { useTranslation } from "../utils/LanguageContext";
